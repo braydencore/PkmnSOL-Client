@@ -43,9 +43,19 @@
       </div>
 
       <div id="speaker-grille"><span></span><span></span><span></span><span></span><span></span></div>
-      <div class="shoulder-btn left">L</div>
-      <div class="shoulder-btn right">R</div>
+      <button type="button" class="shoulder-btn left" data-action="map" aria-label="Map">MAP</button>
+      <button type="button" class="shoulder-btn right" data-action="running" aria-label="Toggle running">RUN</button>
     </div>
+
+    <!-- Shown instead of the console when a touch device is held in
+         portrait (see the `.gba-touch` + orientation scoping in
+         style.css) — the game is a fixed 16:9 landscape shape, so
+         portrait can only ever show a small, letterboxed sliver of it. -->
+    <div id="rotate-prompt">
+      <div id="rotate-icon">&#8635;</div>
+      <p>Rotate your device to play</p>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

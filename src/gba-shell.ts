@@ -10,6 +10,8 @@ const ACTION_BUTTONS: Record<string, GameAction> = {
   b: GameAction.CANCEL,
   start: GameAction.MENU,
   select: GameAction.QUICKSLOT,
+  map: GameAction.MAP,
+  running: GameAction.RUNNING,
 };
 
 /** Touch is the PRIMARY input (coarse pointer, no hover) — a touch-capable
@@ -125,7 +127,9 @@ function wireDpad(scene: Phaser.Scene): void {
 function wireActionButtons(scene: Phaser.Scene): void {
   const keyboard = scene.input.keyboard!;
 
-  document.querySelectorAll<HTMLElement>('#touch-controls [data-action]').forEach((btn) => {
+  // A/B/Start/Select live in #touch-controls; the shoulder buttons (Map,
+  // Running) are direct children of #gba-console instead — this covers both.
+  document.querySelectorAll<HTMLElement>('#gba-console [data-action]').forEach((btn) => {
     const action = ACTION_BUTTONS[btn.dataset.action ?? ''];
     if (!action) return;
 
