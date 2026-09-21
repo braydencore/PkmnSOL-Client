@@ -1,7 +1,7 @@
 import { IGamePhase } from '@poposafari/core';
 import { GameScene } from '@poposafari/scenes';
 import type { CostumeData } from '@poposafari/types';
-import { ANIMATION, BGM, DEPTH, MAP, PC_BG_CNT, SFX, TEXTURE, TILE } from '@poposafari/types';
+import { ANIMATION, DEPTH, PC_BG_CNT, SFX, TEXTURE, TILE } from '@poposafari/types';
 import {
   createAnimationFromFrameNames,
   createSpriteAnimation,
@@ -110,11 +110,59 @@ export class LoadingPhase implements IGamePhase {
     this.ui = new LoadingUi(this.scene);
     this.ui.show();
 
-    await this.loadAssets();
-    this.createSprite();
-    // this.applyCustomCursor();
+    // Boot only loads the handful of images/sounds the Welcome/Login/Register/Title
+    // screens actually render (well under 1MB). Everything else the game needs —
+    // Pokemon spritesheets, every map's tiles, all 55 tilemaps, the full BGM library,
+    // costumes, item icons, etc. (100MB+) — used to load here too, which is exactly
+    // why mobile Safari crashed before a player ever saw a login screen: iOS kills a
+    // tab that blows its memory budget rather than showing a JS error. That larger
+    // load now happens once, later, via loadDeferredAssets() — triggered from
+    // TitlePhase, after auth, right before it's actually needed.
+    await this.loadStage1Assets();
 
     this.scene.switchPhase(new WelcomePhase(this.scene));
+  }
+
+  private loadStage1Assets(): Promise<void> {
+    return new Promise((resolve) => {
+      this.scene.load.once('complete', () => resolve());
+
+      this.scene.loadImage(TEXTURE.BG_1, 'ui/bgs', 'bg_1');
+      this.scene.loadImage(TEXTURE.BG_2, 'ui/bgs', 'bg_2');
+      this.scene.loadImage(TEXTURE.BG_3, 'ui/bgs', 'bg_3');
+      this.scene.loadImage(TEXTURE.BG_4, 'ui/bgs', 'bg_4');
+      this.scene.loadImage(TEXTURE.BG_5, 'ui/bgs', 'bg_5');
+      this.scene.loadImage(TEXTURE.BG_6, 'ui/bgs', 'bg_6');
+      this.scene.loadImage(TEXTURE.BG_7, 'ui/bgs', 'bg_7');
+      this.scene.loadImage(TEXTURE.BG_8, 'ui/bgs', 'bg_8');
+      this.scene.loadImage(TEXTURE.BG_9, 'ui/bgs', 'bg_9');
+      this.scene.loadImage(TEXTURE.BG_10, 'ui/bgs', 'bg_10');
+      this.scene.loadImage(TEXTURE.BG_11, 'ui/bgs', 'bg_11');
+      this.scene.loadImage(TEXTURE.BG_12, 'ui/bgs', 'bg_12');
+      this.scene.loadImage(TEXTURE.WINDOW_1, 'ui/windows', 'window_1');
+      this.scene.loadImage(TEXTURE.WINDOW_2, 'ui/windows', 'window_2');
+      this.scene.loadImage(TEXTURE.WINDOW_3, 'ui/windows', 'window_3');
+      this.scene.loadImage(TEXTURE.ICON_GOOGLE, 'ui/icons', 'icon_google');
+      this.scene.loadImage(TEXTURE.ICON_DISCORD, 'ui/icons', 'icon_discord');
+      this.scene.loadImage(TEXTURE.LOGO_GITHUB, 'ui', 'logo_github');
+      this.scene.loadImage(TEXTURE.LOGO_DISCORD, 'ui', 'logo_discord');
+      this.scene.loadAudio(SFX.OPEN_0, 'audio/se', 'open_0', 'ogg');
+      this.scene.loadAudio(SFX.CURSOR_0, 'audio/se', 'cursor_0', 'ogg');
+      this.scene.loadAudio(SFX.BUZZER, 'audio/se', 'buzzer', 'ogg');
+
+      this.scene.load.start();
+    });
+  }
+
+  /**
+   * Everything Stage 1 skipped. Safe to call more than once (Phaser no-ops a
+   * load queued for a key it already has cached) — callers just need to await
+   * it before whatever they're gating on.
+   */
+  async loadDeferredAssets(ui: LoadingUi): Promise<void> {
+    this.ui = ui;
+    await this.loadAssets();
+    this.createSprite();
   }
 
   private applyCustomCursor(): void {
@@ -654,19 +702,9 @@ export class LoadingPhase implements IGamePhase {
   }
 
   private loadImageAndSprite() {
-    this.scene.loadImage(TEXTURE.BG_1, 'ui/bgs', 'bg_1');
-    this.scene.loadImage(TEXTURE.BG_2, 'ui/bgs', 'bg_2');
-    this.scene.loadImage(TEXTURE.BG_3, 'ui/bgs', 'bg_3');
-    this.scene.loadImage(TEXTURE.BG_4, 'ui/bgs', 'bg_4');
-    this.scene.loadImage(TEXTURE.BG_5, 'ui/bgs', 'bg_5');
-    this.scene.loadImage(TEXTURE.BG_6, 'ui/bgs', 'bg_6');
-    this.scene.loadImage(TEXTURE.BG_7, 'ui/bgs', 'bg_7');
-    this.scene.loadImage(TEXTURE.BG_8, 'ui/bgs', 'bg_8');
-    this.scene.loadImage(TEXTURE.BG_9, 'ui/bgs', 'bg_9');
-    this.scene.loadImage(TEXTURE.BG_10, 'ui/bgs', 'bg_10');
-    this.scene.loadImage(TEXTURE.BG_11, 'ui/bgs', 'bg_11');
-    this.scene.loadImage(TEXTURE.BG_12, 'ui/bgs', 'bg_12');
-
+    // BG_1..BG_12, WINDOW_1..WINDOW_3, ICON_GOOGLE/DISCORD, LOGO_GITHUB/DISCORD are
+    // already loaded by Stage 1 (loadStage1Assets) — Login/Title need them before
+    // this deferred load even starts.
     this.scene.loadImage(TEXTURE.BG_BLACK, 'ui/bgs', 'bg_black');
     this.scene.loadImage(TEXTURE.BG_PC, 'ui/bgs', 'bg_pc');
     this.scene.loadImage(TEXTURE.BG_EVOLVE, 'ui/bgs', 'bg_evolve');
@@ -701,8 +739,6 @@ export class LoadingPhase implements IGamePhase {
     this.scene.loadImage(TEXTURE.PARTICLE_HM_0, 'ui/hm', 'particle_hm_0');
     this.scene.loadImage(TEXTURE.PARTICLE_HM_1, 'ui/hm', 'particle_hm_1');
 
-    this.scene.loadImage(TEXTURE.LOGO_DISCORD, 'ui', 'logo_discord');
-    this.scene.loadImage(TEXTURE.LOGO_GITHUB, 'ui', 'logo_github');
 
     // for (let i = 0; i <= PC_BG_CNT; i++) {
     //   this.scene.loadImage(`pc_bg_${i}`, 'ui/pc', `box_${i}`);
@@ -725,9 +761,6 @@ export class LoadingPhase implements IGamePhase {
 
     this.scene.loadImage(TEXTURE.BLANK, 'ui', 'blank');
 
-    this.scene.loadImage(TEXTURE.WINDOW_1, 'ui/windows', 'window_1');
-    this.scene.loadImage(TEXTURE.WINDOW_2, 'ui/windows', 'window_2');
-    this.scene.loadImage(TEXTURE.WINDOW_3, 'ui/windows', 'window_3');
     this.scene.loadImage(TEXTURE.WINDOW_GUIDE, 'ui/windows', 'window_guide');
     this.scene.loadAtlas(TEXTURE.SEL, 'ui', 'sel', 'sel');
     this.scene.loadImage(TEXTURE.WINDOW_WHITE, 'ui/windows', 'window_white');
@@ -786,8 +819,6 @@ export class LoadingPhase implements IGamePhase {
     this.scene.loadImage(TEXTURE.ICON_REGISTER, 'ui/icons', 'icon_register');
     this.scene.loadImage(TEXTURE.ICON_RATE_UP, 'ui', 'up_rate');
     this.scene.loadImage(TEXTURE.ICON_RATE_DOWN, 'ui', 'down_rate');
-    this.scene.loadImage(TEXTURE.ICON_DISCORD, 'ui/icons', 'icon_discord');
-    this.scene.loadImage(TEXTURE.ICON_GOOGLE, 'ui/icons', 'icon_google');
     this.scene.loadImage(TEXTURE.ICON_POKE_RADER, 'ui/icons', 'icon_poke-rader');
     this.scene.loadImage(TEXTURE.ICON_MAP, 'ui/icons', 'icon_map');
 
@@ -957,64 +988,10 @@ export class LoadingPhase implements IGamePhase {
     this.scene.loadImage(TILE.OUTDOOR_URBAN, 'ui/maps/outdoor', 'urban');
     this.scene.loadImage(TILE.OUTDOOR_EVENT, 'ui/maps/outdoor', 'event');
 
-    //plaza
-    this.scene.loadMap(MAP.PLAZA_001, 'ui/maps', MAP.PLAZA_001);
-    this.scene.loadMap(MAP.PLAZA_002, 'ui/maps', MAP.PLAZA_002);
-    this.scene.loadMap(MAP.PLAZA_003, 'ui/maps', MAP.PLAZA_003);
-    this.scene.loadMap(MAP.PLAZA_004, 'ui/maps', MAP.PLAZA_004);
-    this.scene.loadMap(MAP.PLAZA_005, 'ui/maps', MAP.PLAZA_005);
-    this.scene.loadMap(MAP.PLAZA_006, 'ui/maps', MAP.PLAZA_006);
-    this.scene.loadMap(MAP.PLAZA_007, 'ui/maps', MAP.PLAZA_007);
-    this.scene.loadMap(MAP.PLAZA_008, 'ui/maps', MAP.PLAZA_008);
-    this.scene.loadMap(MAP.PLAZA_009, 'ui/maps', MAP.PLAZA_009);
-
-    this.scene.loadMap(MAP.SAFARI_000, 'ui/maps', MAP.SAFARI_000);
-    this.scene.loadMap(MAP.SAFARI_001, 'ui/maps', MAP.SAFARI_001);
-    this.scene.loadMap(MAP.SAFARI_002, 'ui/maps', MAP.SAFARI_002);
-    this.scene.loadMap(MAP.SAFARI_003, 'ui/maps', MAP.SAFARI_003);
-    this.scene.loadMap(MAP.SAFARI_004, 'ui/maps', MAP.SAFARI_004);
-    this.scene.loadMap(MAP.SAFARI_005, 'ui/maps', MAP.SAFARI_005);
-    this.scene.loadMap(MAP.SAFARI_006, 'ui/maps', MAP.SAFARI_006);
-    this.scene.loadMap(MAP.SAFARI_007, 'ui/maps', MAP.SAFARI_007);
-    this.scene.loadMap(MAP.SAFARI_008, 'ui/maps', MAP.SAFARI_008);
-    this.scene.loadMap(MAP.SAFARI_009, 'ui/maps', MAP.SAFARI_009);
-    this.scene.loadMap(MAP.SAFARI_010, 'ui/maps', MAP.SAFARI_010);
-    this.scene.loadMap(MAP.SAFARI_011, 'ui/maps', MAP.SAFARI_011);
-    this.scene.loadMap(MAP.SAFARI_012, 'ui/maps', MAP.SAFARI_012);
-    this.scene.loadMap(MAP.SAFARI_013, 'ui/maps', MAP.SAFARI_013);
-    this.scene.loadMap(MAP.SAFARI_014, 'ui/maps', MAP.SAFARI_014);
-    this.scene.loadMap(MAP.SAFARI_015, 'ui/maps', MAP.SAFARI_015);
-    this.scene.loadMap(MAP.SAFARI_016, 'ui/maps', MAP.SAFARI_016);
-    this.scene.loadMap(MAP.SAFARI_017, 'ui/maps', MAP.SAFARI_017);
-    this.scene.loadMap(MAP.SAFARI_018, 'ui/maps', MAP.SAFARI_018);
-    this.scene.loadMap(MAP.SAFARI_019, 'ui/maps', MAP.SAFARI_019);
-    this.scene.loadMap(MAP.SAFARI_020, 'ui/maps', MAP.SAFARI_020);
-    this.scene.loadMap(MAP.SAFARI_021, 'ui/maps', MAP.SAFARI_021);
-    this.scene.loadMap(MAP.SAFARI_022, 'ui/maps', MAP.SAFARI_022);
-    this.scene.loadMap(MAP.SAFARI_023, 'ui/maps', MAP.SAFARI_023);
-    this.scene.loadMap(MAP.SAFARI_024, 'ui/maps', MAP.SAFARI_024);
-    this.scene.loadMap(MAP.SAFARI_025, 'ui/maps', MAP.SAFARI_025);
-    this.scene.loadMap(MAP.SAFARI_026, 'ui/maps', MAP.SAFARI_026);
-    this.scene.loadMap(MAP.SAFARI_027, 'ui/maps', MAP.SAFARI_027);
-    this.scene.loadMap(MAP.SAFARI_028, 'ui/maps', MAP.SAFARI_028);
-    this.scene.loadMap(MAP.SAFARI_029, 'ui/maps', MAP.SAFARI_029);
-    this.scene.loadMap(MAP.SAFARI_030, 'ui/maps', MAP.SAFARI_030);
-    this.scene.loadMap(MAP.SAFARI_031, 'ui/maps', MAP.SAFARI_031);
-    this.scene.loadMap(MAP.SAFARI_032, 'ui/maps', MAP.SAFARI_032);
-    this.scene.loadMap(MAP.SAFARI_033, 'ui/maps', MAP.SAFARI_033);
-    this.scene.loadMap(MAP.SAFARI_034, 'ui/maps', MAP.SAFARI_034);
-    this.scene.loadMap(MAP.SAFARI_035, 'ui/maps', MAP.SAFARI_035);
-    this.scene.loadMap(MAP.SAFARI_036, 'ui/maps', MAP.SAFARI_036);
-    this.scene.loadMap(MAP.SAFARI_037, 'ui/maps', MAP.SAFARI_037);
-    this.scene.loadMap(MAP.SAFARI_038, 'ui/maps', MAP.SAFARI_038);
-    this.scene.loadMap(MAP.SAFARI_039, 'ui/maps', MAP.SAFARI_039);
-    this.scene.loadMap(MAP.SAFARI_040, 'ui/maps', MAP.SAFARI_040);
-    this.scene.loadMap(MAP.SAFARI_041, 'ui/maps', MAP.SAFARI_041);
-    this.scene.loadMap(MAP.SAFARI_042, 'ui/maps', MAP.SAFARI_042);
-    this.scene.loadMap(MAP.SAFARI_043, 'ui/maps', MAP.SAFARI_043);
-    this.scene.loadMap(MAP.SAFARI_044, 'ui/maps', MAP.SAFARI_044);
-    this.scene.loadMap(MAP.SAFARI_045, 'ui/maps', MAP.SAFARI_045);
-    this.scene.loadMap(MAP.SAFARI_046, 'ui/maps', MAP.SAFARI_046);
+    // Per-map tilemap JSON (~18MB combined across all 55 maps) is no longer
+    // preloaded here — MapBuilder.ensureLoaded() fetches only the one map being
+    // entered, right before OverworldPhase builds it. The tile *images* above are
+    // shared/global across every map, so they still load once, here.
 
     // this.scene.loadMap(MAP.PLAZA_002, 'ui/maps', MAP.PLAZA_002);
     // this.scene.loadMap(MAP.PLAZA_003, 'ui/maps', MAP.PLAZA_003);
@@ -1100,10 +1077,8 @@ export class LoadingPhase implements IGamePhase {
   }
 
   private loadAudio() {
-    this.scene.loadAudio(SFX.OPEN_0, 'audio/se', 'open_0', 'ogg');
-    this.scene.loadAudio(SFX.CURSOR_0, 'audio/se', 'cursor_0', 'ogg');
+    // SFX.OPEN_0 / CURSOR_0 / BUZZER already loaded by Stage 1.
     this.scene.loadAudio(SFX.CURSOR_1, 'audio/se', 'cursor_1', 'ogg');
-    this.scene.loadAudio(SFX.BUZZER, 'audio/se', 'buzzer', 'ogg');
     this.scene.loadAudio(SFX.DOOR_0, 'audio/se', 'door_0', 'ogg');
     this.scene.loadAudio(SFX.DOOR_1, 'audio/se', 'door_1', 'ogg');
     this.scene.loadAudio(SFX.DOOR_2, 'audio/se', 'door_2', 'ogg');
@@ -1144,50 +1119,10 @@ export class LoadingPhase implements IGamePhase {
     this.scene.loadAudio(SFX.STEP_WATER, 'audio/se', 'step_water', 'ogg');
     this.scene.loadAudio(SFX.SHINY, 'audio/se', 'shiny', 'wav');
 
-    this.scene.loadAudio(BGM.BATTLE_0, 'audio/bgm', 'battle_0', 'ogg');
-    this.scene.loadAudio(BGM.BATTLE_1, 'audio/bgm', 'battle_1', 'ogg');
-    this.scene.loadAudio(BGM.BATTLE_2, 'audio/bgm', 'battle_2', 'ogg');
-    this.scene.loadAudio(BGM.BATTLE_STRONG, 'audio/bgm', 'battle_strong', 'ogg');
-    this.scene.loadAudio(BGM.BATTLE_VICTORY, 'audio/bgm', 'battle_victory', 'ogg');
-    this.scene.loadAudio(BGM.P001_0, 'audio/bgm', 'p001_0', 'ogg');
-    this.scene.loadAudio(BGM.P001_1, 'audio/bgm', 'p001_1', 'ogg');
-    this.scene.loadAudio(BGM.P001_2, 'audio/bgm', 'p001_2', 'ogg');
-    this.scene.loadAudio(BGM.P001_3, 'audio/bgm', 'p001_3', 'ogg');
-    this.scene.loadAudio(BGM.P001_4, 'audio/bgm', 'p001_4', 'ogg');
-    this.scene.loadAudio(BGM.P001_5, 'audio/bgm', 'p001_5', 'ogg');
-    this.scene.loadAudio(BGM.P001_6, 'audio/bgm', 'p001_6', 'ogg');
-    this.scene.loadAudio(BGM.P001_7, 'audio/bgm', 'p001_7', 'ogg');
-    this.scene.loadAudio(BGM.P001_8, 'audio/bgm', 'p001_8', 'ogg');
-    this.scene.loadAudio(BGM.P001_9, 'audio/bgm', 'p001_9', 'ogg');
-    this.scene.loadAudio(BGM.P001_10, 'audio/bgm', 'p001_10', 'ogg');
-    this.scene.loadAudio(BGM.P001_11, 'audio/bgm', 'p001_11', 'ogg');
-    this.scene.loadAudio(BGM.P001_12, 'audio/bgm', 'p001_12', 'ogg');
-    this.scene.loadAudio(BGM.P001_13, 'audio/bgm', 'p001_13', 'ogg');
-    this.scene.loadAudio(BGM.P001_14, 'audio/bgm', 'p001_14', 'ogg');
-    this.scene.loadAudio(BGM.P001_15, 'audio/bgm', 'p001_15', 'ogg');
-    this.scene.loadAudio(BGM.P009, 'audio/bgm', 'p009', 'wav');
-    this.scene.loadAudio(BGM.POKEMART, 'audio/bgm', 'pokemart', 'ogg');
-    this.scene.loadAudio(BGM.S000, 'audio/bgm', 's000', 'ogg');
-    this.scene.loadAudio(BGM.S001, 'audio/bgm', 's001', 'ogg');
-    this.scene.loadAudio(BGM.S002, 'audio/bgm', 's002', 'ogg');
-    this.scene.loadAudio(BGM.S003, 'audio/bgm', 's003', 'ogg');
-    this.scene.loadAudio(BGM.S004, 'audio/bgm', 's004', 'ogg');
-    this.scene.loadAudio(BGM.S005, 'audio/bgm', 's005', 'ogg');
-    this.scene.loadAudio(BGM.S006, 'audio/bgm', 's006', 'ogg');
-    this.scene.loadAudio(BGM.S007, 'audio/bgm', 's007', 'ogg');
-    this.scene.loadAudio(BGM.S008_S011, 'audio/bgm', 's008_s011', 'ogg');
-    this.scene.loadAudio(BGM.S012, 'audio/bgm', 's012', 'ogg');
-    this.scene.loadAudio(BGM.S013_S014, 'audio/bgm', 's013_s014', 'ogg');
-    this.scene.loadAudio(BGM.S015_S020, 'audio/bgm', 's015_s020', 'ogg');
-    this.scene.loadAudio(BGM.S021, 'audio/bgm', 's021', 'ogg');
-    this.scene.loadAudio(BGM.S022, 'audio/bgm', 's022', 'ogg');
-    this.scene.loadAudio(BGM.S023, 'audio/bgm', 's023', 'ogg');
-    this.scene.loadAudio(BGM.S024_S031, 'audio/bgm', 's024_s031', 'ogg');
-    this.scene.loadAudio(BGM.S032_S038, 'audio/bgm', 's032_s038', 'ogg');
-    this.scene.loadAudio(BGM.S039_S040, 'audio/bgm', 's039_s040', 'ogg');
-    this.scene.loadAudio(BGM.S041, 'audio/bgm', 's041', 'ogg');
-    this.scene.loadAudio(BGM.S042_S045, 'audio/bgm', 's042_s045', 'ogg');
-    this.scene.loadAudio(BGM.S046, 'audio/bgm', 's046', 'ogg');
+    // BGM (~90MB combined — the single largest chunk of the whole game) is no
+    // longer preloaded here at all. AudioManager.playBackground/playInterruptBackground
+    // now fetch a track on demand the first time it's actually played (map entry,
+    // battle start, the in-game jukebox), then it stays cached for the session.
   }
 
   private createSprite() {

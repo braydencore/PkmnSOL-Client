@@ -1,4 +1,5 @@
 import { BGM, SFX } from '@poposafari/types';
+import { assetUrlSafe } from '@poposafari/utils/asset-url';
 
 export interface SeamlessLoopHandle {
   stop(): void;
@@ -201,7 +202,28 @@ export class AudioManager {
     this.scene.sound.stopByKey(key as unknown as string);
   }
 
-  public playBackground(key: BGM, duration: number = 1000, rate: number = 1): void {
+  /**
+   * BGM tracks are no longer bundled into the eager boot load (they're most of the
+   * game's download weight, and loading all of them up front is what was crashing
+   * mobile Safari). Every BGM file key equals its filename 1:1 (only the extension
+   * differs: BGM.P009 is the sole .wav, everything else is .ogg), so we can fetch
+   * one on demand here instead of requiring a caller to have preloaded it.
+   */
+  private ensureBgmLoaded(key: BGM): Promise<void> {
+    const soundKey = key as unknown as string;
+    if (!soundKey || this.scene.cache.audio.has(soundKey)) return Promise.resolve();
+    const ext = key === BGM.P009 ? 'wav' : 'ogg';
+    const url = assetUrlSafe(`audio/bgm/${soundKey}.${ext}`);
+    if (!url) return Promise.resolve();
+    return new Promise((resolve) => {
+      this.scene.load.once('complete', () => resolve());
+      this.scene.load.audio(soundKey, url);
+      this.scene.load.start();
+    });
+  }
+
+  public async playBackground(key: BGM, duration: number = 1000, rate: number = 1): Promise<void> {
+    await this.ensureBgmLoaded(key);
     if (this.currentBgm && this.currentBgm.key === (key as unknown as string)) {
       if (!this.currentBgm.isPlaying) {
         this.currentBgm.resume();
@@ -240,7 +262,8 @@ export class AudioManager {
     });
   }
 
-  public playInterruptBackground(key: BGM): void {
+  public async playInterruptBackground(key: BGM): Promise<void> {
+    await this.ensureBgmLoaded(key);
     if (this.currentBgm && this.currentBgm.isPlaying) {
       this.currentBgm.pause();
       this.pausedBgm = this.currentBgm;

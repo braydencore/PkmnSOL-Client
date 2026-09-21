@@ -28,6 +28,10 @@ export class TitlePhase implements IGamePhase {
 
     this.ui.show();
     this.startOnlineRefresh();
+    // Warm the deferred asset cache (Pokemon sprites, costumes, item icons, maps'
+    // tile images, etc.) in the background while the player looks at the menu, so
+    // by the time they pick Continue/New Game it's often already done.
+    void this.scene.ensureDeferredAssets();
     await this.runMenuOnce();
   }
 
@@ -44,6 +48,7 @@ export class TitlePhase implements IGamePhase {
         if (this.scene.getUser()) {
           const res = await this.scene.getApi().gameConnect();
           if (res.ready) {
+            await this.scene.ensureDeferredAssets();
             this.scene.switchPhase(new OverworldEntryPhase(this.scene, undefined, res.token));
             return;
           }
@@ -58,6 +63,7 @@ export class TitlePhase implements IGamePhase {
       if (result.input === 'newgame') {
         const hasAvatar = !!this.scene.getUser() || !!this.opts.forceContinueEnabled;
         if (!hasAvatar) {
+          await this.scene.ensureDeferredAssets();
           this.scene.switchPhase(new CreateAvatarPhase(this.scene));
           return;
         }

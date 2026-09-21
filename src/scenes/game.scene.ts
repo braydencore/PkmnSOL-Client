@@ -14,6 +14,7 @@ import { MasterData } from '@poposafari/core/master.data.ts';
 import { UserManager } from '@poposafari/core/user.manager';
 import {
   LoadingPhase,
+  LoadingUi,
   LoginPhase,
   RegisterPhase,
   MessageUi,
@@ -95,6 +96,7 @@ export class GameScene extends BaseScene {
   private user: UserManager | null = null;
   private mapRegistry!: MapRegistry;
   private mapBuilder!: MapBuilder;
+  private deferredAssetsPromise: Promise<void> | null = null;
 
   private phaseStack: IGamePhase[] = [];
 
@@ -489,6 +491,26 @@ export class GameScene extends BaseScene {
 
   getMapBuilder(): MapBuilder {
     return this.mapBuilder;
+  }
+
+  /**
+   * Everything Stage 1 (login/title chrome) didn't need — Pokemon spritesheets,
+   * item icons, costumes, etc. (~50MB) — loads exactly once, on demand, the first
+   * time this is called (from TitlePhase, before "Continue"/"New Game" can proceed).
+   * Safe to call again later; it just returns the same resolved promise.
+   */
+  ensureDeferredAssets(): Promise<void> {
+    if (!this.deferredAssetsPromise) {
+      const ui = new LoadingUi(this);
+      ui.show();
+      this.deferredAssetsPromise = new LoadingPhase(this)
+        .loadDeferredAssets(ui)
+        .finally(() => {
+          ui.hide();
+          ui.destroy();
+        });
+    }
+    return this.deferredAssetsPromise;
   }
 
   getSafariInfo(): Map<string, SafariMapInfo> {

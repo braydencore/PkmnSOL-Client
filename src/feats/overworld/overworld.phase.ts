@@ -237,6 +237,7 @@ export class OverworldPhase implements IGamePhase {
       throw new Error(`Map not found: ${location}`);
     }
 
+    await this.scene.getMapBuilder().ensureLoaded(mapConfig);
     const mapView = this.scene.getMapBuilder().build(mapConfig);
     this.overworldUi = new OverworldUi(this.scene);
     this.overworldUi.setMapView(mapView);
