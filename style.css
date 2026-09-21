@@ -35,24 +35,32 @@ body {
   display: none;
 }
 
-/* ===== Touch mode: a CSS-drawn Game Boy Advance shell wrapped around the
+/* ===== Touch mode: a CSS-drawn handheld console shell wrapped around the
    game, with a functional D-pad / A-B / Start-Select deck (see
    gba-shell.ts for the touch-input wiring). Only active when touch is the
    PRIMARY input (coarse pointer AND no hover) — a touch-capable laptop
-   with a keyboard stays in plain desktop mode. ===== */
+   with a keyboard stays in plain desktop mode.
+
+   #screen is sized by FLEX, not a fixed design box or an outer
+   transform-scale — it simply grows to fill whatever room is left after
+   the header/deck take their natural height, in either orientation. A
+   tall phone in portrait gets a console that fills the screen edge to
+   edge instead of a small landscape-shaped card floating in empty space;
+   Phaser's own Scale.FIT then letterboxes the 16:9 game content inside
+   that box, which is a normal look for a console screen and costs far
+   less real estate than letterboxing the WHOLE shell would. ===== */
 body.gba-touch {
-  --shell-hi: #e0392c;
-  --shell-mid: #b8231a;
-  --shell-lo: #7a140e;
-  background: #14151a;
+  --shell-hi: #5b5f68;
+  --shell-mid: #34373d;
+  --shell-lo: #1b1c20;
+  --shell-line: rgba(255, 255, 255, 0.08);
+  background: #0a0a0c;
   overflow: hidden;
   position: fixed;
   inset: 0;
   font-family: 'Press Start 2P', 'Courier New', monospace;
   touch-action: manipulation;
   display: flex;
-  align-items: center;
-  justify-content: center;
   /* keep the console clear of notches / the iOS home indicator / Android
      gesture bar in both orientations (needs viewport-fit=cover) */
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
@@ -62,16 +70,16 @@ body.gba-touch {
 body.gba-touch #gba-console {
   display: flex;
   flex-direction: column;
-  padding: 18px 22px 22px;
+  width: 100%;
+  height: 100%;
+  padding: 10px 14px 14px;
+  gap: 8px;
   background:
-    linear-gradient(155deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 30%),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 24%),
     linear-gradient(200deg, var(--shell-hi) 0%, var(--shell-mid) 45%, var(--shell-lo) 100%);
-  border-radius: 22px 22px 46px 46px;
   box-shadow:
-    inset 0 2px 2px rgba(255, 255, 255, 0.35),
-    inset 0 -10px 22px rgba(0, 0, 0, 0.35),
-    0 20px 50px rgba(0, 0, 0, 0.6);
-  transform-origin: center center;
+    inset 0 1px 1px rgba(255, 255, 255, 0.18),
+    inset 0 -12px 26px rgba(0, 0, 0, 0.45);
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -79,43 +87,53 @@ body.gba-touch #gba-console {
 }
 
 body.gba-touch #shell-top {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 6px 12px;
+  /* side padding clears the shoulder buttons, which sit on top of this
+     row (see .shoulder-btn) rather than pushing it down */
+  padding: 2px 76px 0;
+  min-height: 18px;
 }
 body.gba-touch #shell-brand {
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 1px;
-  color: rgba(255, 246, 238, 0.92);
+  color: rgba(235, 238, 245, 0.75);
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35);
 }
 body.gba-touch #power-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #b6ffb0, #2fa22a 70%);
-  box-shadow: 0 0 5px 2px rgba(70, 240, 60, 0.55);
+  box-shadow: 0 0 4px 1px rgba(70, 240, 60, 0.5);
 }
 
-/* The visible glass/bezel around the Phaser canvas — a fixed 16:9 design
-   size matching the game's own aspect ratio, so it just sizes the frame
-   without needing to know anything about the game's internal scaling
-   (Phaser's own Scale.FIT handles fitting the canvas inside #app). */
+/* The visible glass/bezel around the Phaser canvas. Grows to fill
+   whatever space #shell-top and #touch-controls leave (flex: 1), instead
+   of a fixed design size — Phaser's own Scale.FIT handles centering and
+   letterboxing the 16:9 canvas inside it at whatever size that ends up
+   being. */
 body.gba-touch #screen {
+  /* Sized in pixels by gba-shell.ts's layoutScreen(), not flex/aspect-ratio
+     — it needs to pick whichever of width/height is the binding constraint
+     for the CURRENT viewport (portrait vs. landscape flips which one that
+     is), which plain CSS can't express without either wasted letterbox
+     inside the bezel or overflow. #touch-controls (flex: 1 below) absorbs
+     whatever room is left over, instead. */
   position: relative;
-  width: 640px;
-  height: 360px;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #000;
-  border: 5px solid #17181c;
-  border-radius: 6px;
+  border: 4px solid #08090b;
+  border-radius: 4px;
   box-shadow:
-    0 0 0 3px #8b8f96,
-    0 0 0 5px #3a3d42,
-    inset 0 0 24px rgba(0, 0, 0, 0.85);
+    0 0 0 2px #55585f,
+    0 0 0 4px #26282d,
+    inset 0 0 20px rgba(0, 0, 0, 0.85);
   overflow: hidden;
 }
 body.gba-touch #app {
@@ -128,21 +146,28 @@ body.gba-touch #screen-glare {
   inset: 0;
   z-index: 5;
   pointer-events: none;
-  background: linear-gradient(115deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 26%);
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 22%);
 }
 
-/* ===== Control deck: D-pad / A-B / Start-Select, real GBA layout ===== */
+/* ===== Control deck: D-pad / A-B / Start-Select ===== */
 body.gba-touch #touch-controls {
+  /* Absorbs whatever vertical room #screen's fixed pixel size doesn't use
+     (see the #screen comment above) by centering the fixed-size D-pad/
+     button cluster within it — generous plastic padding around the
+     controls reads as normal console design; a black void inside the
+     screen bezel reads as broken. */
+  flex: 1;
+  min-height: 90px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22px 10px 4px;
+  padding: 4px 8px;
   position: relative;
 }
 body.gba-touch #touch-controls button {
   pointer-events: auto;
   border: none;
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.82);
   font-family: inherit;
   touch-action: none;
   user-select: none;
@@ -150,151 +175,157 @@ body.gba-touch #touch-controls button {
   -webkit-tap-highlight-color: transparent;
 }
 body.gba-touch #touch-controls button.on {
-  filter: brightness(1.35);
+  filter: brightness(1.4);
 }
 
 body.gba-touch #dpad {
   position: relative;
-  width: 148px;
-  height: 148px;
+  width: 138px;
+  height: 138px;
   flex: none;
 }
 body.gba-touch #dpad-hub {
   position: absolute;
-  left: 50px;
-  top: 50px;
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(160deg, #333, #161616);
-  border-radius: 6px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  left: 46px;
+  top: 46px;
+  width: 46px;
+  height: 46px;
+  background:
+    radial-gradient(circle at 40% 32%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(160deg, #2a2c30, #101113);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.5);
 }
 body.gba-touch #dpad button {
   position: absolute;
-  background: linear-gradient(160deg, #3d3d3d, #202020);
+  background: linear-gradient(160deg, #3a3c40, #1c1d20);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -3px 4px rgba(0, 0, 0, 0.5),
-    0 2px 3px rgba(0, 0, 0, 0.4);
-  font-size: 15px;
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -3px 5px rgba(0, 0, 0, 0.55),
+    0 2px 3px rgba(0, 0, 0, 0.45);
+  font-size: 14px;
   line-height: 1;
 }
 body.gba-touch #tc-up,
 body.gba-touch #tc-down {
-  left: 50px;
-  width: 48px;
-  height: 56px;
+  left: 46px;
+  width: 46px;
+  height: 52px;
 }
 body.gba-touch #tc-left,
 body.gba-touch #tc-right {
-  top: 50px;
-  width: 56px;
-  height: 48px;
+  top: 46px;
+  width: 52px;
+  height: 46px;
 }
 body.gba-touch #tc-up {
   top: 0;
-  border-radius: 8px 8px 3px 3px;
+  border-radius: 7px 7px 2px 2px;
 }
 body.gba-touch #tc-down {
   bottom: 0;
-  border-radius: 3px 3px 8px 8px;
+  border-radius: 2px 2px 7px 7px;
 }
 body.gba-touch #tc-left {
   left: 0;
-  border-radius: 8px 3px 3px 8px;
+  border-radius: 7px 2px 2px 7px;
 }
 body.gba-touch #tc-right {
   right: 0;
-  border-radius: 3px 8px 8px 3px;
+  border-radius: 2px 7px 7px 2px;
 }
 
 body.gba-touch #mid-buttons {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   align-items: center;
-  transform: rotate(-18deg) translateY(10px);
+  transform: rotate(-18deg) translateY(6px);
 }
 body.gba-touch #touch-controls .pill {
-  width: 52px;
-  height: 15px;
-  border-radius: 8px;
-  background: linear-gradient(160deg, #4a4a4a, #262626);
+  width: 46px;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(160deg, #45474c, #202124);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
     inset 0 -2px 3px rgba(0, 0, 0, 0.5);
-  font-size: 6px;
+  font-size: 5.5px;
   letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 body.gba-touch #action-pad {
   position: relative;
-  width: 150px;
-  height: 106px;
+  width: 132px;
+  height: 96px;
   flex: none;
 }
 body.gba-touch #action-pad button {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, #ffdf7a, #e8a622 65%, #c4820f 100%);
+  background: radial-gradient(circle at 32% 28%, #7bd8d0, #2f9d94 65%, #1c6f68 100%);
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -4px 6px rgba(120, 60, 0, 0.45),
-    0 3px 4px rgba(0, 0, 0, 0.4);
-  color: #6b3a00;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -4px 6px rgba(0, 45, 42, 0.5),
+    0 3px 4px rgba(0, 0, 0, 0.45);
+  color: #073432;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 body.gba-touch #tc-a {
   top: 0;
   right: 0;
-  width: 66px;
-  height: 66px;
-  font-size: 20px;
+  width: 58px;
+  height: 58px;
+  font-size: 18px;
 }
 body.gba-touch #tc-b {
   bottom: 0;
   left: 0;
-  width: 58px;
-  height: 58px;
-  font-size: 17px;
+  width: 50px;
+  height: 50px;
+  font-size: 15px;
 }
 
 /* ===== decorative shell details ===== */
 body.gba-touch #speaker-grille {
   display: flex;
   position: absolute;
-  right: 26px;
-  bottom: 18px;
-  gap: 5px;
+  right: 22px;
+  bottom: 14px;
+  gap: 4px;
   transform: rotate(-24deg);
 }
 body.gba-touch #speaker-grille span {
-  width: 4px;
-  height: 24px;
-  background: rgba(0, 0, 0, 0.32);
+  width: 3px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.4);
   border-radius: 2px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 body.gba-touch .shoulder-btn {
   display: block;
   position: absolute;
-  top: -9px;
-  width: 54px;
-  height: 18px;
-  background: linear-gradient(180deg, #4a4a4a, #232323);
-  border-radius: 8px 8px 3px 3px;
+  top: 2px;
+  z-index: 1;
+  width: 64px;
+  height: 16px;
+  background: linear-gradient(180deg, #45474c, #1c1d20);
+  border-radius: 0 0 8px 8px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1),
     0 2px 3px rgba(0, 0, 0, 0.4);
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 8px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 7px;
   text-align: center;
-  line-height: 18px;
+  line-height: 16px;
   pointer-events: none;
 }
 body.gba-touch .shoulder-btn.left {
-  left: 6px;
+  left: 4px;
 }
 body.gba-touch .shoulder-btn.right {
-  right: 6px;
+  right: 4px;
 }

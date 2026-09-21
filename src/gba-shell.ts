@@ -151,26 +151,67 @@ function wireActionButtons(scene: Phaser.Scene): void {
   });
 }
 
-/** Scales the whole console (as one proportional unit, like zooming a photo
- * of a real device) to fit the viewport in either orientation. #screen keeps
- * a fixed 16:9 design size — Phaser's own Scale.FIT handles fitting the
- * canvas inside it, so this never needs to touch Phaser directly. */
-function setupFit(): void {
-  const consoleEl = document.getElementById('gba-console');
-  if (!consoleEl) return;
+const GAME_ASPECT = 16 / 9;
+// Must match #touch-controls' min-height in style.css — the floor we leave
+// for the deck so it never gets squeezed to nothing in landscape.
+const MIN_CONTROLS_H = 90;
 
-  const fit = (): void => {
-    const vv = window.visualViewport;
-    const vw = vv ? vv.width : window.innerWidth;
-    const vh = vv ? vv.height : window.innerHeight;
-    const s = Math.max(0.3, Math.min(vw / consoleEl.offsetWidth, vh / consoleEl.offsetHeight));
-    consoleEl.style.transform = `scale(${s})`;
+/**
+ * Sizes #screen in real pixels to whichever of width/height is the binding
+ * constraint for the CURRENT viewport — portrait binds on width (screen
+ * spans edge to edge, deck gets whatever's left below it); landscape binds
+ * on height instead (screen would otherwise overflow taller than the
+ * viewport). Plain CSS (flex/aspect-ratio) can't express "pick the smaller
+ * of these two" without either wasted letterbox inside the bezel or
+ * overflow, so this does the one bit of real math the shell needs and
+ * leaves everything else (centering the deck in whatever's left) to flex.
+ */
+function layoutScreen(): void {
+  const consoleEl = document.getElementById('gba-console');
+  const shellTop = document.getElementById('shell-top');
+  const screenEl = document.getElementById('screen');
+  if (!consoleEl || !shellTop || !screenEl) return;
+
+  const vv = window.visualViewport;
+  const vw = vv ? vv.width : window.innerWidth;
+  const vh = vv ? vv.height : window.innerHeight;
+
+  const cs = getComputedStyle(consoleEl);
+  const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const gapPx = parseFloat(cs.rowGap || cs.gap || '0');
+
+  const availW = Math.max(1, vw - padX);
+  const shellTopH = shellTop.offsetHeight;
+  // Two gaps: between shell-top/screen and screen/touch-controls.
+  const availH = Math.max(1, vh - padY - gapPx * 2 - shellTopH - MIN_CONTROLS_H);
+
+  let w = availW;
+  let h = w / GAME_ASPECT;
+  if (h > availH) {
+    h = availH;
+    w = h * GAME_ASPECT;
+  }
+  screenEl.style.width = `${w}px`;
+  screenEl.style.height = `${h}px`;
+}
+
+/**
+ * Phaser's Scale.FIT watches its parent via a ResizeObserver, so changing
+ * #screen/#app's real box size (above) should already make it re-fit on its
+ * own — but iOS Safari's orientation-change timing is flaky enough that an
+ * explicit refresh (after layout has actually settled) is cheap, safe
+ * insurance on top of that.
+ */
+function setupFit(game: Phaser.Game): void {
+  const relayout = (): void => {
+    layoutScreen();
+    game.scale.refresh();
   };
 
-  fit();
-  window.addEventListener('resize', fit);
-  window.addEventListener('orientationchange', () => setTimeout(fit, 200));
-  window.visualViewport?.addEventListener('resize', fit);
+  window.addEventListener('resize', relayout);
+  window.addEventListener('orientationchange', () => setTimeout(relayout, 250));
+  window.visualViewport?.addEventListener('resize', relayout);
 
   // iOS Safari ignores the viewport meta's user-scalable=no for pinch-zoom
   // (an intentional accessibility override) — block it explicitly so a
@@ -182,27 +223,21 @@ function setupFit(): void {
 /**
  * Must run BEFORE `new Phaser.Game(...)` — Phaser reads its parent element's
  * current CSS size once, synchronously, at construction, so #app needs to
- * already be inside the shell's fixed-size #screen (not the default
+ * already be inside the shell's flex-sized #screen (not the default
  * full-window layout) the moment the game boots. Returns whether the shell
  * was activated, so callers can skip the post-construction wiring below.
  */
 export function prepareGbaShell(): boolean {
   if (!isTouchPrimary()) return false;
   document.body.classList.add('gba-touch');
+  layoutScreen();
   return true;
 }
 
 export function initGbaShell(game: Phaser.Game): void {
   if (!document.body.classList.contains('gba-touch')) return;
 
-  // Deliberately deferred until AFTER Phaser exists: Phaser's Scale.FIT
-  // reads #app's on-screen bounding rect once at construction to compute
-  // its own internal canvas fit, and that read is transform-aware — if the
-  // console's viewport-fit transform (below) were already applied, Phaser
-  // would fit itself against the ALREADY-shrunk apparent size and end up
-  // double-scaled (a much smaller canvas than #screen actually has room
-  // for). Measuring first, transforming second, avoids that entirely.
-  setupFit();
+  setupFit(game);
 
   const wire = (): void => {
     const scene = game.scene.getScene(SCENE_KEY);
