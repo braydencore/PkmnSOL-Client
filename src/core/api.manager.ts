@@ -47,7 +47,10 @@ export class ApiManager {
   private onMaintenance: (() => void) | null = null;
   private onRequestStart: (() => void) | null = null;
   private onRequestEnd: (() => void) | null = null;
-  private static readonly TIMEOUT = 10000;
+  // Render's free tier spins the backend down after ~15min idle and takes
+  // 30-60s to cold-start it back up on the next request. 10s was too short
+  // to survive that and made a normal cold start look like a broken app.
+  private static readonly TIMEOUT = 60000;
 
   constructor(private baseUrl: string = 'http://localhost:9000/api') {
     this.client = axios.create({
