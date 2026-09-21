@@ -61,6 +61,13 @@ body.gba-touch {
   font-family: 'Press Start 2P', 'Courier New', monospace;
   touch-action: manipulation;
   display: flex;
+  flex-direction: column;
+  /* #gba-console takes its own natural (content-driven) height, not
+     100% — if there's leftover viewport space once the screen and deck
+     are both at a comfortable size, center the whole console in it
+     rather than stretching either one to fill the gap. */
+  align-items: stretch;
+  justify-content: center;
   /* keep the console clear of notches / the iOS home indicator / Android
      gesture bar in both orientations (needs viewport-fit=cover) */
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
@@ -71,7 +78,6 @@ body.gba-touch #gba-console {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
   padding: 10px 14px 14px;
   gap: 8px;
   background:
@@ -151,17 +157,14 @@ body.gba-touch #screen-glare {
 
 /* ===== Control deck: D-pad / A-B / Start-Select ===== */
 body.gba-touch #touch-controls {
-  /* Absorbs whatever vertical room #screen's fixed pixel size doesn't use
-     (see the #screen comment above) by centering the fixed-size D-pad/
-     button cluster within it — generous plastic padding around the
-     controls reads as normal console design; a black void inside the
-     screen bezel reads as broken. */
-  flex: 1;
-  min-height: 90px;
+  /* Natural (unstretched) size — any leftover viewport space is handled by
+     centering the whole console (see body.gba-touch), not by stretching
+     the deck's own button gaps. */
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
+  padding: 6px 10px 2px;
   position: relative;
 }
 body.gba-touch #touch-controls button {

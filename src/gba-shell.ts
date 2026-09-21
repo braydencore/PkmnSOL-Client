@@ -152,25 +152,33 @@ function wireActionButtons(scene: Phaser.Scene): void {
 }
 
 const GAME_ASPECT = 16 / 9;
-// Must match #touch-controls' min-height in style.css — the floor we leave
-// for the deck so it never gets squeezed to nothing in landscape.
-const MIN_CONTROLS_H = 90;
+// How much taller than the pure width-critical fit #screen is allowed to
+// grow on a narrow phone, before the extra height is left as console
+// padding instead. The excess becomes letterbox INSIDE the screen glass
+// (Phaser centers the 16:9 content and bars the rest) — a real, deliberate
+// bezel is a normal look for a handheld's screen; this just caps how much
+// of one there is, since going further stops reading as "glass" and starts
+// reading as "mostly dead space with a small game in the middle."
+const SCREEN_HEIGHT_TOLERANCE = 1.3;
 
 /**
  * Sizes #screen in real pixels to whichever of width/height is the binding
- * constraint for the CURRENT viewport — portrait binds on width (screen
- * spans edge to edge, deck gets whatever's left below it); landscape binds
- * on height instead (screen would otherwise overflow taller than the
- * viewport). Plain CSS (flex/aspect-ratio) can't express "pick the smaller
- * of these two" without either wasted letterbox inside the bezel or
- * overflow, so this does the one bit of real math the shell needs and
- * leaves everything else (centering the deck in whatever's left) to flex.
+ * constraint for the CURRENT viewport — portrait binds on width (the game
+ * itself is a fixed 16:9 landscape shape, so its rendered size can never
+ * exceed viewport-width * 9/16 no matter how much taller the screen box
+ * gets); landscape binds on height instead (screen would otherwise overflow
+ * taller than the viewport). Plain CSS (flex/aspect-ratio) can't express
+ * "pick the smaller of these two, with a capped tolerance on one side"
+ * without either wasted letterbox or overflow, so this does the one bit of
+ * real math the shell needs. #touch-controls and #gba-console handle
+ * everything else (natural sizing + centering) via flex/CSS alone.
  */
 function layoutScreen(): void {
   const consoleEl = document.getElementById('gba-console');
   const shellTop = document.getElementById('shell-top');
+  const controls = document.getElementById('touch-controls');
   const screenEl = document.getElementById('screen');
-  if (!consoleEl || !shellTop || !screenEl) return;
+  if (!consoleEl || !shellTop || !controls || !screenEl) return;
 
   const vv = window.visualViewport;
   const vw = vv ? vv.width : window.innerWidth;
@@ -183,12 +191,18 @@ function layoutScreen(): void {
 
   const availW = Math.max(1, vw - padX);
   const shellTopH = shellTop.offsetHeight;
+  const controlsH = controls.offsetHeight;
   // Two gaps: between shell-top/screen and screen/touch-controls.
-  const availH = Math.max(1, vh - padY - gapPx * 2 - shellTopH - MIN_CONTROLS_H);
+  const availH = Math.max(1, vh - padY - gapPx * 2 - shellTopH - controlsH);
 
-  let w = availW;
-  let h = w / GAME_ASPECT;
-  if (h > availH) {
+  const wCritical = availW;
+  const hCritical = wCritical / GAME_ASPECT;
+
+  let w = wCritical;
+  let h = Math.min(availH, hCritical * SCREEN_HEIGHT_TOLERANCE);
+  if (h < hCritical) {
+    // Landscape: height is the tighter constraint even at the critical
+    // (no-tolerance) size, so bind on it and shrink width to match instead.
     h = availH;
     w = h * GAME_ASPECT;
   }
