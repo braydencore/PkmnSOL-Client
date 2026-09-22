@@ -28,6 +28,10 @@ import type { InitPosConfig } from '@poposafari/feats/overworld/maps/door';
 import type { RoomUserState } from '@poposafari/feats/overworld/overworld-socket.types';
 import { CountdownPhase } from '@poposafari/feats/countdown';
 import { MapBuilder, OverworldEntryPhase, OverworldPhase } from '@poposafari/feats/overworld';
+import { WelcomePhase } from '@poposafari/feats/welcome';
+import { TitlePhase } from '@poposafari/feats/title';
+import { CreateAvatarPhase } from '@poposafari/feats/tutorial';
+import { DeleteAccountPhase } from '@poposafari/feats/delete-account/delete-account.phase';
 import { DIRECTION } from '@poposafari/feats/overworld/overworld.constants';
 import { BaseScene } from '@poposafari/scenes';
 import { GetMeRes, TEXTURE } from '@poposafari/types';
@@ -653,6 +657,7 @@ export class GameScene extends BaseScene {
     this.phaseStack = [newPhase];
     this.logPhaseStack('switchPhase', newPhase);
     newPhase.enter();
+    this.notifyPhaseChange(newPhase);
   }
 
   pushPhase(newPhase: IGamePhase) {
@@ -664,6 +669,7 @@ export class GameScene extends BaseScene {
     this.phaseStack.push(newPhase);
     this.logPhaseStack('pushPhase', newPhase);
     newPhase.enter();
+    this.notifyPhaseChange(newPhase);
   }
 
   popPhase() {
@@ -689,12 +695,31 @@ export class GameScene extends BaseScene {
       current.onResume();
     }
     this.logPhaseStack('popPhase (after)');
+    if (current) this.notifyPhaseChange(current);
   }
 
   private logPhaseStack(tag: string, added?: IGamePhase): void {
     const names = this.phaseStack.map((p) => (p as any).constructor?.name ?? '?');
     const msg = added ? `${tag} + ${(added as any).constructor?.name}` : tag;
     debugLog(`[PhaseStack] ${msg} | length=${this.phaseStack.length} | [${names.join(', ')}]`);
+  }
+
+  /** Lets the mobile touch-controls overlay (gba-shell.ts) know whether the
+   * active phase has any player movement — it hides the floating
+   * D-pad/buttons on non-gameplay screens (login, title, account forms)
+   * where they'd otherwise sit on top of that screen's own tappable canvas
+   * UI. Checked via `instanceof` rather than a name string: production
+   * builds mangle class names, so `constructor.name` isn't reliable here. */
+  private notifyPhaseChange(phase: IGamePhase): void {
+    const isNonGameplay =
+      phase instanceof LoadingPhase ||
+      phase instanceof WelcomePhase ||
+      phase instanceof TitlePhase ||
+      phase instanceof LoginPhase ||
+      phase instanceof RegisterPhase ||
+      phase instanceof DeleteAccountPhase ||
+      phase instanceof CreateAvatarPhase;
+    window.dispatchEvent(new CustomEvent('poposafari:phase', { detail: { hideControls: isNonGameplay } }));
   }
 
   getCurrentPhase(): IGamePhase | undefined {
