@@ -42,6 +42,15 @@ function getBoundCode(action: GameAction): string {
   return DEFAULT_KEYBINDS[action];
 }
 
+// Matches KEY.UP/DOWN/LEFT/RIGHT in types/keyboard.ts (standard browser
+// KeyboardEvent.code values for the arrow keys).
+const DIR_CODES: Record<Direction, string> = {
+  up: 'ArrowUp',
+  down: 'ArrowDown',
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
+};
+
 function wireDpad(scene: Phaser.Scene): void {
   const dpadEl = document.getElementById('dpad');
   if (!dpadEl) return;
@@ -79,6 +88,13 @@ function wireDpad(scene: Phaser.Scene): void {
       dirKeys[dir].isDown = true;
       dirBtns.find((b) => b.dataset.dir === dir)?.classList.add('on');
       navigator.vibrate?.(6);
+      // Continuous overworld walking reads the isDown toggle above, same
+      // as a physically-held arrow key — but discrete UI (the title
+      // screen's menu cursor, InputManager's onInput handlers generally)
+      // reacts to an actual 'keydown' EVENT, once per press, not to
+      // isDown state. Without this, the D-pad silently does nothing on
+      // any screen that isn't polling cursor keys every frame.
+      keyboard.emit('keydown', { code: DIR_CODES[dir], repeat: false } as unknown as KeyboardEvent);
     }
     curDir = dir;
   };

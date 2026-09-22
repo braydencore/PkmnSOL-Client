@@ -28,8 +28,6 @@ import type { InitPosConfig } from '@poposafari/feats/overworld/maps/door';
 import type { RoomUserState } from '@poposafari/feats/overworld/overworld-socket.types';
 import { CountdownPhase } from '@poposafari/feats/countdown';
 import { MapBuilder, OverworldEntryPhase, OverworldPhase } from '@poposafari/feats/overworld';
-import { WelcomePhase } from '@poposafari/feats/welcome';
-import { TitlePhase } from '@poposafari/feats/title';
 import { CreateAvatarPhase } from '@poposafari/feats/tutorial';
 import { DeleteAccountPhase } from '@poposafari/feats/delete-account/delete-account.phase';
 import { DIRECTION } from '@poposafari/feats/overworld/overworld.constants';
@@ -704,17 +702,29 @@ export class GameScene extends BaseScene {
     debugLog(`[PhaseStack] ${msg} | length=${this.phaseStack.length} | [${names.join(', ')}]`);
   }
 
-  /** Lets the mobile touch-controls overlay (gba-shell.ts) know whether the
-   * active phase has any player movement — it hides the floating
-   * D-pad/buttons on non-gameplay screens (login, title, account forms)
-   * where they'd otherwise sit on top of that screen's own tappable canvas
-   * UI. Checked via `instanceof` rather than a name string: production
+  /** Lets the mobile touch-controls overlay (gba-shell.ts) know whether to
+   * hide the floating D-pad/buttons. Only true for screens that are BOTH
+   * (a) risky to overlap — their own canvas UI reaches close enough to the
+   * screen edges that our buttons can sit on top of it (confirmed on
+   * login: the OAuth row got hidden under the Select/Start pills) — AND
+   * (b) fully usable by tap alone, so hiding the overlay loses nothing.
+   * Login/Register/DeleteAccount/CreateAvatar are rexUI forms: every
+   * field and button is already tap/click-native, no D-pad or A-button
+   * needed. LoadingPhase has nothing to interact with either way.
+   *
+   * Title and Welcome are deliberately NOT in this list even though
+   * they're also "pre-game": Title's CONTINUE/NEWGAME/etc menu is
+   * keyboard-navigated (up/down + confirm) with no tappable on-canvas
+   * equivalent, and Welcome shows a dialogue message advanced the same
+   * way overworld dialogue is — A to continue. Hiding controls there
+   * doesn't prevent an overlap, it removes the only way to interact with
+   * the screen at all on a touch device.
+   *
+   * Checked via `instanceof` rather than a name string: production
    * builds mangle class names, so `constructor.name` isn't reliable here. */
   private notifyPhaseChange(phase: IGamePhase): void {
     const isNonGameplay =
       phase instanceof LoadingPhase ||
-      phase instanceof WelcomePhase ||
-      phase instanceof TitlePhase ||
       phase instanceof LoginPhase ||
       phase instanceof RegisterPhase ||
       phase instanceof DeleteAccountPhase ||
