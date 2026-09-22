@@ -94,7 +94,10 @@ interface RowSlot {
 }
 
 const QUIT_KEY = '__quit';
+const DELETE_ACCOUNT_KEY = '__delete_account';
 const VISIBLE_ROWS = 9;
+
+export type OptionExitResult = 'closed' | 'delete_account';
 
 export class OptionUi extends BaseUi {
   private bg!: GImage;
@@ -126,7 +129,7 @@ export class OptionUi extends BaseUi {
   /** 키 캡처 모드: true면 다음 키 입력 하나를 captureAction 행에 바인딩한다. */
   private capturing = false;
   private captureAction: GameAction | null = null;
-  private resolveExit: (() => void) | null = null;
+  private resolveExit: ((result: OptionExitResult) => void) | null = null;
   /** 미리듣기 진입 직전에 재생 중이던 배경음(없으면 null). 옵션을 닫을 때 이 곡으로 되돌린다. */
   private bgmBeforePreview: BGM | null = null;
   private previewingBgm = false;
@@ -376,6 +379,10 @@ export class OptionUi extends BaseUi {
     return !!row && row.key === QUIT_KEY;
   }
 
+  private isDeleteAccountRow(row: RowModel | undefined): boolean {
+    return !!row && row.key === DELETE_ACCOUNT_KEY;
+  }
+
   private buildRows(): RowModel[] {
     const category = this.currentCategory();
     const rows: RowModel[] = [];
@@ -404,6 +411,16 @@ export class OptionUi extends BaseUi {
         rows.push({ key, label, values, valueIndex, settable: true });
       }
     }
+
+    // Present in every category, right above Cancel, so it's always reachable
+    // regardless of which settings tab is open.
+    rows.push({
+      key: DELETE_ACCOUNT_KEY,
+      label: i18next.t('etc:deleteAccountMenu'),
+      values: [],
+      valueIndex: 0,
+      settable: false,
+    });
 
     rows.push({
       key: QUIT_KEY,
@@ -595,10 +612,12 @@ export class OptionUi extends BaseUi {
     const y = this.ROW_START_Y + rowIndex * this.ROW_STEP;
 
     const labelLocked = !!row.action && row.rebindable === false;
-    slot.label
-      .setVisible(true)
-      .setText(row.label)
-      .setColor(labelLocked ? TEXTCOLOR.GRAY : TEXTCOLOR.WHITE);
+    const labelColor = this.isDeleteAccountRow(row)
+      ? TEXTCOLOR.RED
+      : labelLocked
+        ? TEXTCOLOR.GRAY
+        : TEXTCOLOR.WHITE;
+    slot.label.setVisible(true).setText(row.label).setColor(labelColor);
 
     const parts = this.buildValueParts(row);
     const gap = ARROW_STYLE_KEYS.has(row.key) ? this.ARROW_GAP : this.PART_GAP;
@@ -671,7 +690,12 @@ export class OptionUi extends BaseUi {
       const row = this.rows[this.listCursor];
       if (this.isQuitRow(row)) {
         audio.playEffect(SFX.CURSOR_0);
-        this.finishExit();
+        this.finishExit('closed');
+        return;
+      }
+      if (this.isDeleteAccountRow(row)) {
+        audio.playEffect(SFX.CURSOR_0);
+        this.finishExit('delete_account');
         return;
       }
       // 키보드 카테고리: 행 확인 시 키 캡처 모드 진입(다음 키 하나만 바인딩).
@@ -683,7 +707,7 @@ export class OptionUi extends BaseUi {
 
     if (action === GameAction.CANCEL) {
       audio.playEffect(SFX.CURSOR_0);
-      this.finishExit();
+      this.finishExit('closed');
       return;
     }
 
@@ -783,7 +807,8 @@ export class OptionUi extends BaseUi {
     audio.playBackground(bgm, BGM_PREVIEW_FADE_MS);
   }
 
-  private stopBattleBgmPreview(): void {
+  /** Public so OptionPhase can silence a preview before pushing DeleteAccountPhase on top. */
+  stopBattleBgmPreview(): void {
     if (!this.previewingBgm) return;
     this.previewingBgm = false;
 
@@ -801,7 +826,7 @@ export class OptionUi extends BaseUi {
     return new Promise(() => {});
   }
 
-  waitForExit(): Promise<void> {
+  waitForExit(): Promise<OptionExitResult> {
     return new Promise((resolve) => {
       this.resolveExit = resolve;
     });
@@ -854,13 +879,13 @@ export class OptionUi extends BaseUi {
     this.rebuildList();
   }
 
-  private finishExit(): void {
+  private finishExit(result: OptionExitResult): void {
     this.stopBattleBgmPreview();
     if (!this.resolveExit) return;
     this.cursorTween?.stop();
     this.cursorTween = null;
     const resolve = this.resolveExit;
     this.resolveExit = null;
-    resolve();
+    resolve(result);
   }
 }

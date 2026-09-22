@@ -18,7 +18,6 @@ import {
   addText,
   getSessionBackgroundKey,
   getTextShadow,
-  getTextStyle,
 } from '@poposafari/utils';
 import i18next from '@poposafari/i18n';
 import { TalkMessageUi } from '../message';
@@ -41,16 +40,11 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
   private bg!: GImage;
   private title!: GImage;
 
+  private static readonly MAIN_TITLE_KEYS = ['etc:play', 'etc:option', 'etc:logout'] as const;
+
   private mainContainer!: GContainer;
   private mainTexts: GText[] = [];
-  // Only one of 'etc:continue'/'etc:newgame' is ever included — a persistent
-  // multiplayer account has exactly one character, so there's no save-slot
-  // choice to offer: this single slot always does the one sensible thing
-  // (resume if a character exists, create one if it doesn't).
-  private readonly mainTitleKeys: readonly string[];
-  private mainTitles: string[];
-  private ignoreTitleKeys: string[] = ['etc:mysteryGift'];
-  private ignoreTitles: string[] = [];
+  private mainTitles: string[] = TitleUi.MAIN_TITLE_KEYS.map((k) => i18next.t(k));
 
   private versionText!: GText;
   private playersOnline: number = 0;
@@ -70,41 +64,27 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
   // 오픈 소스 비공개 상태 — Github 클릭 시 타이핑 효과로 안내 문구를 출력한다.
   private githubNotice!: TypingTextContainer;
 
-  constructor(scene: GameScene, existUser: boolean) {
+  constructor(scene: GameScene) {
     super(scene, scene.getInputManager(), DEPTH.DEFAULT);
     this.scene = scene;
     this.audio = scene.getAudio();
     this.talk = scene.getMessage('talk');
 
-    this.mainTitleKeys = [
-      existUser ? 'etc:continue' : 'etc:newgame',
-      'etc:mysteryGift',
-      'etc:option',
-      'etc:logout',
-      'etc:deleteAccountMenu',
-    ];
-    this.mainTitles = this.mainTitleKeys.map((k) => i18next.t(k));
-    this.ignoreTitles = this.ignoreTitleKeys.map((k) => i18next.t(k));
     this.createLayout();
-    this.findInitialValidCursor();
     this.updateCursor();
   }
 
   onInput(key: string, action: GameAction | null): void {
     if (action === GameAction.CONFIRM) {
-      const select = this.handleSelect();
       this.audio.playEffect(SFX.CURSOR_0);
 
-      if (select !== 'none' && this.inputResolver) {
+      if (this.inputResolver) {
         const inputMap: Record<string, TitleUiInput> = {
-          [i18next.t('etc:continue')]: 'continue',
-          [i18next.t('etc:newgame')]: 'newgame',
-          [i18next.t('etc:mysteryGift')]: 'mystery_gift',
+          [i18next.t('etc:play')]: 'play',
           [i18next.t('etc:option')]: 'option',
-          [i18next.t('etc:deleteAccountMenu')]: 'delete_account',
           [i18next.t('etc:logout')]: 'logout',
         };
-        const input = inputMap[select] ?? 'logout';
+        const input = inputMap[this.mainTitles[this.currentCursor]] ?? 'logout';
         this.inputResolver({ input, cursorIndex: this.currentCursor });
         this.inputResolver = null;
       }
@@ -128,34 +108,13 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
 
   private moveCursor(step: number): void {
     const len = this.mainTexts.length;
-    let nextIndex = this.currentCursor;
-    let count = 0;
-
-    while (count < len) {
-      nextIndex = (nextIndex + step + len) % len;
-      count++;
-
-      const nextTitle = this.mainTitles[nextIndex];
-
-      if (!this.ignoreTitles.includes(nextTitle)) {
-        this.currentCursor = nextIndex;
-        this.updateCursor();
-        return;
-      }
-    }
-  }
-
-  private findInitialValidCursor(): void {
-    const currentTitle = this.mainTitles[this.currentCursor];
-    if (this.ignoreTitles.includes(currentTitle)) {
-      this.moveCursor(1);
-    }
+    this.currentCursor = (this.currentCursor + step + len) % len;
+    this.updateCursor();
   }
 
   waitForInput(initialCursorIndex?: number): Promise<{ input: TitleUiInput; cursorIndex: number }> {
     if (initialCursorIndex !== undefined) {
       this.currentCursor = Math.max(0, Math.min(this.mainTitles.length - 1, initialCursorIndex));
-      this.findInitialValidCursor();
       this.updateCursor();
     }
     return new Promise((resolve) => {
@@ -453,50 +412,23 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
     };
   }
 
-  private handleSelect(): string {
-    const currentTitle = this.mainTitles[this.currentCursor];
-
-    if (this.ignoreTitles.includes(currentTitle)) {
-      return 'none';
-    }
-
-    return currentTitle;
-  }
-
   private updateCursor() {
     this.mainTexts.forEach((text, index) => {
       const isSelected = index === this.currentCursor;
-      this.applyMenu(text, text.text, isSelected);
+      text.setColor(isSelected ? TEXTCOLOR.YELLOW : TEXTCOLOR.WHITE);
+
+      const [sx, sy, sc] = getTextShadow(TEXTSHADOW.GRAY);
+      text.setShadow(sx, sy, sc);
     });
   }
 
-  private applyMenu(textObj: GText, title: string, isSelected: boolean) {
-    if (this.ignoreTitles.includes(title)) {
-      const blockStyle = getTextStyle(TEXTSTYLE.BLOCKING, 70, '100');
-      textObj.setColor(blockStyle.color || TEXTCOLOR.LIGHT_GRAY);
-
-      const [sx, sy, sc] = getTextShadow(TEXTSHADOW.BLOCKING);
-      textObj.setShadow(sx, sy, sc);
-      return;
-    }
-
-    const targetColor = isSelected ? TEXTCOLOR.YELLOW : TEXTCOLOR.WHITE;
-    const targetShadowEnum = isSelected ? TEXTSHADOW.GRAY : TEXTSHADOW.GRAY;
-
-    textObj.setColor(targetColor);
-
-    const [sx, sy, sc] = getTextShadow(targetShadowEnum);
-    textObj.setShadow(sx, sy, sc);
-  }
-
   onRefreshLanguage(): void {
-    for (let i = 0; i < this.mainTitleKeys.length; i++) {
-      const key = this.mainTitleKeys[i];
+    for (let i = 0; i < TitleUi.MAIN_TITLE_KEYS.length; i++) {
+      const key = TitleUi.MAIN_TITLE_KEYS[i];
       this.mainTitles[i] = i18next.t(key);
       this.mainTexts[i].setText(this.mainTitles[i]);
     }
 
-    this.ignoreTitles = this.ignoreTitleKeys.map((k) => i18next.t(k));
     this.updateCursor();
 
     this.playersOnlineText.setText(i18next.t('etc:playersOnline', { value: this.playersOnline }));

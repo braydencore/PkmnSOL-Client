@@ -1,6 +1,7 @@
 import { IGamePhase } from '@poposafari/core';
 import { GameEvent, GameScene } from '@poposafari/scenes';
 import { OptionUi } from './option.ui';
+import { DeleteAccountPhase } from '../delete-account/delete-account.phase';
 
 export class OptionPhase implements IGamePhase {
   private ui: OptionUi | null = null;
@@ -10,7 +11,22 @@ export class OptionPhase implements IGamePhase {
   async enter(): Promise<void> {
     this.ui = new OptionUi(this.scene);
     this.ui.show();
-    await this.ui.waitForExit();
+    await this.runLoop();
+  }
+
+  /**
+   * Delete Account pushes DeleteAccountPhase on top without popping this
+   * phase, so cancelling it returns here rather than all the way back out
+   * (e.g. to Title, or the in-game pause menu). onResume() re-arms the wait
+   * below for that return trip.
+   */
+  private async runLoop(): Promise<void> {
+    if (!this.ui) return;
+    const result = await this.ui.waitForExit();
+    if (result === 'delete_account') {
+      this.scene.pushPhase(new DeleteAccountPhase(this.scene));
+      return;
+    }
     this.scene.popPhase();
   }
 
@@ -34,6 +50,11 @@ export class OptionPhase implements IGamePhase {
     this.ui?.onRefreshLanguage();
   }
 
-  onPause?(): void {}
-  onResume?(): void {}
+  onPause(): void {
+    this.ui?.stopBattleBgmPreview();
+  }
+
+  onResume(): void {
+    void this.runLoop();
+  }
 }

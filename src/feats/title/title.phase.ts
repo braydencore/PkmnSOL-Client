@@ -3,10 +3,9 @@ import { GameScene } from '@poposafari/scenes';
 import { TitleUi } from './title.ui';
 import { LoginPhase } from '../login';
 import { OptionPhase } from '../option/option.phase';
-import { MysteryGiftPhase } from '../mysterygift/mysterygift.phase';
 import { CreateAvatarPhase } from '../tutorial';
-import { DeleteAccountPhase } from '../delete-account/delete-account.phase';
 import { OverworldEntryPhase } from '../overworld/overworld-entry.phase';
+import { ApiError, ErrorCode } from '@poposafari/types';
 
 const ONLINE_REFRESH_MS = 30_000;
 const SERVER_BUSY_COOLDOWN_SEC = 5;
@@ -23,14 +22,13 @@ export class TitlePhase implements IGamePhase {
   ) {}
 
   async enter(): Promise<void> {
-    const continueEnabled = this.opts.forceContinueEnabled || !!this.scene.getUser();
-    this.ui = new TitleUi(this.scene, continueEnabled);
+    this.ui = new TitleUi(this.scene);
 
     this.ui.show();
     this.startOnlineRefresh();
     // Warm the deferred asset cache (Pokemon sprites, costumes, item icons, maps'
     // tile images, etc.) in the background while the player looks at the menu, so
-    // by the time they pick Continue/New Game it's often already done.
+    // by the time they pick Play it's often already done.
     void this.scene.ensureDeferredAssets();
     await this.runMenuOnce();
   }
@@ -40,12 +38,20 @@ export class TitlePhase implements IGamePhase {
     this.savedCursorIndex = result.cursorIndex;
 
     try {
-      if (result.input === 'continue') {
+      if (result.input === 'play') {
         if (!this.scene.getUser()) {
-          const me = await this.scene.getApi().getMe();
-          if (me) this.scene.createUserManager(me);
+          try {
+            const me = await this.scene.getApi().getMe();
+            if (me) this.scene.createUserManager(me);
+          } catch (error: any) {
+            const errorCode = error instanceof ApiError ? error.code : error?.response?.data?.code;
+            // No character yet is expected here (PLAY is the only entry
+            // point now) — fall through to CreateAvatarPhase below. Anything
+            // else (session expired, server error, ...) is a real failure.
+            if (errorCode !== ErrorCode.USER_NOT_FOUND) throw error;
+          }
         }
-        if (this.scene.getUser()) {
+        if (this.scene.getUser() || this.opts.forceContinueEnabled) {
           const res = await this.scene.getApi().gameConnect();
           if (res.ready) {
             await this.scene.ensureDeferredAssets();
@@ -57,23 +63,9 @@ export class TitlePhase implements IGamePhase {
           await this.runMenuOnce();
           return;
         }
-        await this.runMenuOnce();
-        return;
-      }
-      if (result.input === 'newgame') {
-        // Only ever shown when the account has no character yet (see
-        // TitleUi's mainTitleKeys) — creating one is the only thing this
-        // entry can mean now.
+        // No character yet — the one thing PLAY can do is start creating one.
         await this.scene.ensureDeferredAssets();
         this.scene.switchPhase(new CreateAvatarPhase(this.scene));
-        return;
-      }
-      if (result.input === 'delete_account') {
-        this.scene.pushPhase(new DeleteAccountPhase(this.scene));
-        return;
-      }
-      if (result.input === 'mystery_gift') {
-        this.scene.pushPhase(new MysteryGiftPhase(this.scene));
         return;
       }
       if (result.input === 'option') {
