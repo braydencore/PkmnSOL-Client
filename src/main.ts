@@ -5,6 +5,7 @@ import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
 import { GameScene } from './scenes/game.scene';
 import { initI18n } from './i18n';
 import { initGbaShell, prepareGbaShell } from './gba-shell';
+import { renderInstallGate, shouldGateForInstall } from './install-gate';
 
 const config: Phaser.Types.Core.GameConfig = {
   // WebGL(GPU 가속)을 우선 시도하고, 사용 불가 환경(드라이버 블랙리스트,
@@ -50,6 +51,16 @@ const config: Phaser.Types.Core.GameConfig = {
 
 const start = async () => {
   console.info(`[poposafari] ${__BUILD_VERSION__} (build ${__BUILD_SHA__}) @ ${__BUILD_AT__}`);
+
+  // Touch devices that haven't been added to the Home Screen get a
+  // blocking install screen instead of the game — bailing out here, before
+  // i18n or Phaser even start, skips the ~150MB asset load entirely for
+  // anyone who hasn't installed yet.
+  if (shouldGateForInstall()) {
+    renderInstallGate();
+    return;
+  }
+
   await initI18n();
 
   prepareGbaShell();

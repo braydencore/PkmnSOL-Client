@@ -264,3 +264,70 @@ body.gba-touch #rotate-prompt p {
     transform: rotate(-90deg);
   }
 }
+
+/* ===== Install gate: touch devices that haven't been added to the Home
+   Screen get this instead of the game (see src/install-gate.ts, which
+   toggles `body.install-gate` before Phaser or any game asset loads).
+   Not scoped to `.gba-touch` — prepareGbaShell() is never called when
+   gated, so this is the only class body gets. Shown in both orientations,
+   unlike the rotate-prompt lock above. ===== */
+body.install-gate #app,
+body.install-gate #touch-controls,
+body.install-gate #rotate-prompt {
+  display: none;
+}
+#install-gate {
+  display: none;
+}
+body.install-gate #install-gate {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  width: 100dvw;
+  height: 100dvh;
+  z-index: 200;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #0a0a0c;
+  color: rgba(235, 238, 245, 0.92);
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  text-align: center;
+  padding: 32px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+#install-gate-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  image-rendering: pixelated;
+}
+#install-gate h1 {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 480px;
+  color: #8fdc7a;
+}
+#install-gate p {
+  margin: 0;
+  font-size: 9px;
+  line-height: 1.9;
+  max-width: 460px;
+  opacity: 0.8;
+}
+#install-gate-steps {
+  text-align: left;
+  font-size: 10px;
+  line-height: 2.3;
+  max-width: 460px;
+  padding-left: 22px;
+  margin: 8px 0 0;
+}
+#install-gate-steps strong {
+  color: #8fdc7a;
+}

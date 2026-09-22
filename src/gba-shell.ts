@@ -15,8 +15,10 @@ const ACTION_BUTTONS: Record<string, GameAction> = {
 };
 
 /** Touch is the PRIMARY input (coarse pointer, no hover) — a touch-capable
- * laptop with a keyboard/mouse stays in plain desktop mode. */
-function isTouchPrimary(): boolean {
+ * laptop with a keyboard/mouse stays in plain desktop mode. Also used by
+ * install-gate.ts to decide who gets gated behind the home-screen-install
+ * screen. */
+export function isTouchPrimary(): boolean {
   return (
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(pointer: coarse)').matches &&
