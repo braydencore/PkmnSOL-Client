@@ -58,5 +58,9 @@ export function renderInstallGate(): void {
         ];
 
   const list = document.getElementById('install-gate-steps');
-  if (list) list.innerHTML = steps.map((step) => `<li>${step}</li>`).join('');
+  if (list) {
+    list.innerHTML = steps
+      .map((step, i) => `<li><span class="step-num">${i + 1}</span><span class="step-text">${step}</span></li>`)
+      .join('');
+  }
 }
