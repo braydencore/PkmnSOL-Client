@@ -165,6 +165,43 @@ export class LoadingPhase implements IGamePhase {
     this.createSprite();
   }
 
+  /**
+   * Pokemon sprite multiatlases (front/icon/overworld/overworld_swimming +
+   * call/recall + starter/NPC cries + the shiny atlas) — by far the largest
+   * chunk of what Stage 2 used to load, and not needed until the player
+   * actually reaches the overworld (nothing on Login/Register/Title/Welcome/
+   * CreateAvatar renders a pokemon). Deferred separately so Stage 2 stays
+   * light enough to not repeat the OOM crash that hit right after the
+   * welcome dialogue on memory-constrained mobile Safari.
+   */
+  async loadDeferredPokemonAssets(ui: LoadingUi): Promise<void> {
+    this.ui = ui;
+    await new Promise<void>((resolve) => {
+      this.scene.load.on('progress', (value: number) => {
+        this.ui.setPercentText(value);
+      });
+
+      this.scene.load.on('fileprogress', (file: Phaser.Loader.File) => {
+        this.ui.setAssetText(file.key);
+      });
+
+      this.scene.load.once('complete', () => {
+        this.scene.load.off('progress');
+        this.scene.load.off('fileprogress');
+        resolve();
+      });
+
+      this.loadPokemonAssets();
+      this.scene.load.start();
+    });
+
+    this.createPokemonIconAnimations();
+    this.createPokemonOverworldAnimations();
+    this.createPokemonCallAnimation();
+    this.createPokemonRecallAnimation();
+    createSpriteAnimation(this.scene, TEXTURE.OVERWORLD_SHINY, ANIMATION.OVERWORLD_SHINY);
+  }
+
   private applyCustomCursor(): void {
     this.scene.input.setDefaultCursor('none');
 
@@ -220,7 +257,6 @@ export class LoadingPhase implements IGamePhase {
         if (phase === 1) {
           phase = 2;
           this.loadMasterData();
-          this.loadPokemonAssets();
           this.loadItemAssets();
           this.loadImageAndSprite();
           this.loadWeatherAssets();
@@ -1132,15 +1168,10 @@ export class LoadingPhase implements IGamePhase {
     this.createNpcWalkAnimations();
     this.createNpc1Sprite();
     this.createDoorSprite();
-    this.createPokemonIconAnimations();
-    this.createPokemonOverworldAnimations();
-    this.createPokemonCallAnimation();
-    this.createPokemonRecallAnimation();
     this.createEmoSprite();
     this.createPetEmoSprite();
     this.createBaseSurfAnimations();
     this.createWeatherAnimations();
-    createSpriteAnimation(this.scene, TEXTURE.OVERWORLD_SHINY, ANIMATION.OVERWORLD_SHINY);
     createSpriteAnimation(this.scene, TEXTURE.OVERWORLD_GRASS_1, ANIMATION.OVERWORLD_GRASS_1);
     createSpriteAnimation(this.scene, TEXTURE.OVERWORLD_GRASS_1_B, ANIMATION.OVERWORLD_GRASS_1_B);
     createSpriteAnimation(this.scene, TEXTURE.OVERWORLD_GRASS_2, ANIMATION.OVERWORLD_GRASS_2);

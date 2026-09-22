@@ -99,6 +99,7 @@ export class GameScene extends BaseScene {
   private mapRegistry!: MapRegistry;
   private mapBuilder!: MapBuilder;
   private deferredAssetsPromise: Promise<void> | null = null;
+  private pokemonAssetsPromise: Promise<void> | null = null;
 
   private phaseStack: IGamePhase[] = [];
 
@@ -496,10 +497,11 @@ export class GameScene extends BaseScene {
   }
 
   /**
-   * Everything Stage 1 (login/title chrome) didn't need — Pokemon spritesheets,
-   * item icons, costumes, etc. (~50MB) — loads exactly once, on demand, the first
-   * time this is called (from TitlePhase, before "Continue"/"New Game" can proceed).
-   * Safe to call again later; it just returns the same resolved promise.
+   * Everything Stage 1 (login/title chrome) didn't need except Pokemon
+   * spritesheets — item icons, costumes, master data, shared map tiles, etc. —
+   * loads exactly once, on demand, the first time this is called (from
+   * TitlePhase, before "Continue"/"New Game" can proceed). Safe to call again
+   * later; it just returns the same resolved promise.
    */
   ensureDeferredAssets(): Promise<void> {
     if (!this.deferredAssetsPromise) {
@@ -513,6 +515,29 @@ export class GameScene extends BaseScene {
         });
     }
     return this.deferredAssetsPromise;
+  }
+
+  /**
+   * Pokemon sprite multiatlases + cries (~32MB, the single largest asset
+   * group in the game) — split out of ensureDeferredAssets() so it isn't
+   * pulled in until the player is actually about to enter the overworld,
+   * where it's finally needed. Loading it that late, rather than in the
+   * background right after Title, keeps peak memory down around the welcome
+   * dialogue, where mobile Safari was previously crashing the tab. Safe to
+   * call more than once; returns the same resolved promise after the first.
+   */
+  ensurePokemonAssets(): Promise<void> {
+    if (!this.pokemonAssetsPromise) {
+      const ui = new LoadingUi(this);
+      ui.show();
+      this.pokemonAssetsPromise = new LoadingPhase(this)
+        .loadDeferredPokemonAssets(ui)
+        .finally(() => {
+          ui.hide();
+          ui.destroy();
+        });
+    }
+    return this.pokemonAssetsPromise;
   }
 
   getSafariInfo(): Map<string, SafariMapInfo> {

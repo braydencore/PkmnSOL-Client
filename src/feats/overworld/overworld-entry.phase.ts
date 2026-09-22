@@ -22,6 +22,11 @@ const RECONNECTION_ATTEMPTS = Infinity;
 export class OverworldEntryPhase implements IGamePhase {
   private ui: OverworldEntryUi | null = null;
   private offFns: Array<() => void> = [];
+  // Pokemon sprite atlases (~32MB) are still deferred past Stage 2 (see
+  // GameScene.ensurePokemonAssets) — fired here, in parallel with socket
+  // setup, so it's usually already resolved by the time change_map_ok/init_ok
+  // comes back and we're about to actually need it in the overworld.
+  private pokemonAssetsReady: Promise<void> | null = null;
 
   constructor(
     private scene: GameScene,
@@ -32,6 +37,7 @@ export class OverworldEntryPhase implements IGamePhase {
   async enter(): Promise<void> {
     this.ui = new OverworldEntryUi(this.scene);
     this.ui.show();
+    this.pokemonAssetsReady = this.scene.ensurePokemonAssets();
 
     let socket = this.scene.getSocket();
 
@@ -115,7 +121,7 @@ export class OverworldEntryPhase implements IGamePhase {
         this.scene.setPendingRoomState(payload.users);
       }
     };
-    const onChangeMapOk = (payload: ChangeMapOkPayload) => {
+    const onChangeMapOk = async (payload: ChangeMapOkPayload) => {
       this.removeListeners();
 
       const profile = this.scene.getUser()?.getProfile();
@@ -152,6 +158,7 @@ export class OverworldEntryPhase implements IGamePhase {
         });
       }
 
+      await this.pokemonAssetsReady;
       this.ui?.hide();
       this.ui?.destroy();
       this.ui = null;
@@ -225,6 +232,7 @@ export class OverworldEntryPhase implements IGamePhase {
         });
       }
 
+      await this.pokemonAssetsReady;
       this.ui?.hide();
       this.ui?.destroy();
       this.ui = null;
