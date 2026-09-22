@@ -339,14 +339,14 @@ body.install-gate #install-gate {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: rgba(143, 220, 122, 0.14);
-  border: 1px solid rgba(143, 220, 122, 0.5);
-  color: #8fdc7a;
+  background: rgba(234, 181, 74, 0.14);
+  border: 1px solid rgba(234, 181, 74, 0.55);
+  color: #eab54a;
   font-size: 10px;
 }
 #install-gate-steps .step-text {
   flex: 1;
 }
 #install-gate-steps strong {
-  color: #8fdc7a;
+  color: #eab54a;
 }
