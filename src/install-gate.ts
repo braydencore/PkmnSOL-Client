@@ -26,12 +26,22 @@ function isAndroid(): boolean {
   return /Android/.test(navigator.userAgent);
 }
 
+/** Debug-only escape hatch: `?skipgate` on the URL bypasses the install
+ * gate for that one visit, so the real game can be reached in a regular
+ * mobile browser tab for testing/debugging — normally impossible once a
+ * device is gated, since the gate itself blocks getting to the game to
+ * check anything about it. Not persisted (no localStorage/cookie), so
+ * regular players who don't know the param stay gated normally. */
+function hasDebugSkip(): boolean {
+  return new URLSearchParams(window.location.search).has('skipgate');
+}
+
 /** Touch devices only get the real game once they're running installed —
  * there's no way to lay the game out well while a browser's own URL bar
  * and tab strip are eating into the viewport on top of it. Desktop/mouse
  * players are never gated (isTouchPrimary excludes them). */
 export function shouldGateForInstall(): boolean {
-  return isTouchPrimary() && !isStandalone();
+  return isTouchPrimary() && !isStandalone() && !hasDebugSkip();
 }
 
 export function renderInstallGate(): void {
