@@ -61,12 +61,14 @@ export class TitlePhase implements IGamePhase {
         return;
       }
       if (result.input === 'newgame') {
-        const hasAvatar = !!this.scene.getUser() || !!this.opts.forceContinueEnabled;
-        if (!hasAvatar) {
-          await this.scene.ensureDeferredAssets();
-          this.scene.switchPhase(new CreateAvatarPhase(this.scene));
-          return;
-        }
+        // Only ever shown when the account has no character yet (see
+        // TitleUi's mainTitleKeys) — creating one is the only thing this
+        // entry can mean now.
+        await this.scene.ensureDeferredAssets();
+        this.scene.switchPhase(new CreateAvatarPhase(this.scene));
+        return;
+      }
+      if (result.input === 'delete_account') {
         this.scene.pushPhase(new DeleteAccountPhase(this.scene));
         return;
       }

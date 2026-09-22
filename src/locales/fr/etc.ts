@@ -129,9 +129,10 @@ export const etc: TranslationEtc = {
   s000_tutorial_mud_0: '« Boue » augmente le taux de capture,\nmais',
   s000_tutorial_mud_1: 'elle met aussi le Pokémon en colère,\naugmentant les chances de fuite.',
   s000_tutorial_run_0: "« Fuite » signifie abandonner le combat\net s'échapper sans risque.",
+  deleteAccountMenu: 'SUPPRIMER LE COMPTE',
   deleteAccount_0:
-    'Lancer une NOUVELLE PARTIE supprimera toutes vos\ndonnées jusqu’ici, y compris votre compte.',
-  deleteAccount_1: 'Voulez-vous quand même lancer une NOUVELLE PARTIE ?',
+    'Supprimer votre compte effacera définitivement toute\nvotre progression, vos Pokémon et vos objets.',
+  deleteAccount_1: 'Voulez-vous vraiment supprimer votre compte ?',
   deleteAccount_2: 'Cette action est irréversible.\nVoulez-vous vraiment supprimer ?',
   deleteAccount_3: 'Vraiment ?',
   tooltip_register: 'Objets enregistrés',

@@ -41,17 +41,14 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
   private bg!: GImage;
   private title!: GImage;
 
-  private static readonly MAIN_TITLE_KEYS = [
-    'etc:continue',
-    'etc:newgame',
-    'etc:mysteryGift',
-    'etc:option',
-    'etc:logout',
-  ] as const;
-
   private mainContainer!: GContainer;
   private mainTexts: GText[] = [];
-  private mainTitles: string[] = TitleUi.MAIN_TITLE_KEYS.map((k) => i18next.t(k));
+  // Only one of 'etc:continue'/'etc:newgame' is ever included — a persistent
+  // multiplayer account has exactly one character, so there's no save-slot
+  // choice to offer: this single slot always does the one sensible thing
+  // (resume if a character exists, create one if it doesn't).
+  private readonly mainTitleKeys: readonly string[];
+  private mainTitles: string[];
   private ignoreTitleKeys: string[] = ['etc:mysteryGift'];
   private ignoreTitles: string[] = [];
 
@@ -79,7 +76,14 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
     this.audio = scene.getAudio();
     this.talk = scene.getMessage('talk');
 
-    this.isExistUser(existUser);
+    this.mainTitleKeys = [
+      existUser ? 'etc:continue' : 'etc:newgame',
+      'etc:mysteryGift',
+      'etc:option',
+      'etc:logout',
+      'etc:deleteAccountMenu',
+    ];
+    this.mainTitles = this.mainTitleKeys.map((k) => i18next.t(k));
     this.ignoreTitles = this.ignoreTitleKeys.map((k) => i18next.t(k));
     this.createLayout();
     this.findInitialValidCursor();
@@ -97,6 +101,7 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
           [i18next.t('etc:newgame')]: 'newgame',
           [i18next.t('etc:mysteryGift')]: 'mystery_gift',
           [i18next.t('etc:option')]: 'option',
+          [i18next.t('etc:deleteAccountMenu')]: 'delete_account',
           [i18next.t('etc:logout')]: 'logout',
         };
         const input = inputMap[select] ?? 'logout';
@@ -119,24 +124,6 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
 
   errorEffect(errorMsg: string): void {
     throw new Error('Method not implemented.');
-  }
-
-  private isExistUser(exist: boolean) {
-    if (!exist) {
-      this.ignoreTitleKeys.push('etc:continue');
-    }
-  }
-
-  setExistUser(exist: boolean): void {
-    const idx = this.ignoreTitleKeys.indexOf('etc:continue');
-    if (exist && idx >= 0) {
-      this.ignoreTitleKeys.splice(idx, 1);
-    } else if (!exist && idx < 0) {
-      this.ignoreTitleKeys.push('etc:continue');
-    }
-    this.ignoreTitles = this.ignoreTitleKeys.map((k) => i18next.t(k));
-    this.findInitialValidCursor();
-    this.updateCursor();
   }
 
   private moveCursor(step: number): void {
@@ -503,8 +490,8 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
   }
 
   onRefreshLanguage(): void {
-    for (let i = 0; i < TitleUi.MAIN_TITLE_KEYS.length; i++) {
-      const key = TitleUi.MAIN_TITLE_KEYS[i];
+    for (let i = 0; i < this.mainTitleKeys.length; i++) {
+      const key = this.mainTitleKeys[i];
       this.mainTitles[i] = i18next.t(key);
       this.mainTexts[i].setText(this.mainTitles[i]);
     }

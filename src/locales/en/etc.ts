@@ -125,9 +125,10 @@ export const etc: TranslationEtc = {
   s000_tutorial_mud_0: '"Mud" raises the catch rate,\nbut',
   s000_tutorial_mud_1: 'it also makes the Pokémon angry,\nincreasing the chance to flee.',
   s000_tutorial_run_0: '"Run" means giving up the battle\nand escaping safely.',
+  deleteAccountMenu: 'DELETE ACCOUNT',
   deleteAccount_0:
-    'Starting a NEW GAME will delete all your\nrecords so far, including your account.',
-  deleteAccount_1: 'Do you still want to start a NEW GAME?',
+    'Deleting your account will permanently remove all\nyour progress, Pokémon, and items.',
+  deleteAccount_1: 'Are you sure you want to delete your account?',
   deleteAccount_2: 'This cannot be undone.\nAre you sure you want to delete?',
   deleteAccount_3: 'Really?',
   tooltip_register: 'Registered Items',

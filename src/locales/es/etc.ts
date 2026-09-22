@@ -127,9 +127,10 @@ export const etc: TranslationEtc = {
   s000_tutorial_mud_0: '«Barro» aumenta la tasa de captura,\npero',
   s000_tutorial_mud_1: 'también enfada al Pokémon,\naumentando la probabilidad de que huya.',
   s000_tutorial_run_0: '«Huir» significa abandonar el combate\ny escapar a salvo.',
+  deleteAccountMenu: 'ELIMINAR CUENTA',
   deleteAccount_0:
-    'Empezar una NUEVA PARTIDA eliminará todos tus\nregistros hasta ahora, incluida tu cuenta.',
-  deleteAccount_1: '¿Aun así quieres empezar una NUEVA PARTIDA?',
+    'Eliminar tu cuenta borrará permanentemente todo\ntu progreso, Pokémon y objetos.',
+  deleteAccount_1: '¿Seguro que quieres eliminar tu cuenta?',
   deleteAccount_2: 'Esto no se puede deshacer.\n¿Seguro que quieres eliminar?',
   deleteAccount_3: '¿En serio?',
   tooltip_register: 'Objetos registrados',

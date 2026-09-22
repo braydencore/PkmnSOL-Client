@@ -2,7 +2,13 @@ import { BagItem, CurrentUserCostume, Location, UserPokemon, UserProfile } from 
 
 export type LoginLocalUiInput = { username: string; password: string } | 'register';
 export type RegisterLocalUiInput = { username: string; password: string } | 'login';
-export type TitleUiInput = 'continue' | 'newgame' | 'mystery_gift' | 'option' | 'logout';
+export type TitleUiInput =
+  | 'continue'
+  | 'newgame'
+  | 'mystery_gift'
+  | 'option'
+  | 'delete_account'
+  | 'logout';
 export type OptionUiInput = 'exit';
 
 export interface LoginLocalReq {
