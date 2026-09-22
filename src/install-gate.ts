@@ -42,19 +42,19 @@ export function renderInstallGate(): void {
         'Tap the <strong>Share</strong> button in the toolbar.',
         'Scroll down and tap <strong>Add to Home Screen</strong>.',
         'Tap <strong>Add</strong> in the top-right corner.',
-        'Close this tab, then open PopoSafari from your Home Screen.',
+        'Close this tab, then open PkmnSOL from your Home Screen.',
       ]
     : isAndroid()
       ? [
           'Tap the <strong>⋮ menu</strong> in your browser.',
           'Tap <strong>Add to Home Screen</strong> (or <strong>Install app</strong>).',
           'Confirm with <strong>Add</strong> / <strong>Install</strong>.',
-          'Close this tab, then open PopoSafari from your Home Screen.',
+          'Close this tab, then open PkmnSOL from your Home Screen.',
         ]
       : [
           'Open this page in Safari (iPhone/iPad) or Chrome (Android).',
           'Use the browser menu to <strong>Add to Home Screen</strong>.',
-          'Close this tab, then open PopoSafari from your Home Screen.',
+          'Close this tab, then open PkmnSOL from your Home Screen.',
         ];
 
   const list = document.getElementById('install-gate-steps');

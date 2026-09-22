@@ -172,6 +172,19 @@ function setupFit(game: Phaser.Game): void {
   window.addEventListener('orientationchange', () => setTimeout(refresh, 250));
   window.visualViewport?.addEventListener('resize', refresh);
 
+  // A freshly-launched iOS standalone web app (opened from its Home Screen
+  // icon, not a browser tab) settles its viewport a beat after Phaser's
+  // canvas is already up — since nothing about a fullscreen standalone app
+  // naturally fires a resize/orientationchange afterward, anything that
+  // read the viewport before it settled (rex-plugins' InputText DOM
+  // overlay is the known offender: it position-syncs its HTML <input>
+  // against getBoundingClientRect() once, not continuously) can end up
+  // stuck reading against a stale rect, showing typed text in the wrong
+  // spot on the very first screen (the login form). These staggered
+  // refreshes are cheap insurance against that race — they no-op once the
+  // scale manager has nothing to correct.
+  [100, 400, 1000].forEach((ms) => setTimeout(refresh, ms));
+
   // iOS Safari ignores the viewport meta's user-scalable=no for pinch-zoom
   // (an intentional accessibility override) — block it explicitly so a
   // stray two-finger touch doesn't zoom the page instead of playing.

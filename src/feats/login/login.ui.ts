@@ -79,7 +79,7 @@ export class LoginUi extends BaseUi implements IInputHandler, IRefreshableLangua
 
   createLayout() {
     this.bg = addBackground(this.scene, TEXTURE.BG_1);
-    this.title = addImage(this.scene, TEXTURE.LOGO_0, undefined, 0, -420).setScale(3.2);
+    this.title = addImage(this.scene, TEXTURE.LOGO_0, undefined, 0, -420).setScale(1.75);
 
     this.createModal();
     this.createLabel();

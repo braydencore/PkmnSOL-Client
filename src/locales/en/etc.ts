@@ -18,7 +18,7 @@ export const etc: TranslationEtc = {
   repassword: 'Confirm Password',
   enterYourUsername: 'Please enter your username.',
   enterYourPassword: 'Please enter your password.',
-  welcome_0: 'Welcome to PopoSafari!',
+  welcome_0: 'Welcome to PkmnSOL!',
   welcome_1:
     'This is a Pokémon fan game focused on the Safari Zone\ncontent featured in the Pokémon game series.',
   welcome_2:
@@ -38,7 +38,7 @@ export const etc: TranslationEtc = {
   option: 'OPTIONS',
   logout: 'LOGOUT',
   s000_caught_0: 'Congratulations!\nYou finally got your first Pokémon.',
-  s000_caught_1: 'Now you can really start\nenjoying PopoSafari.',
+  s000_caught_1: 'Now you can really start\nenjoying PkmnSOL.',
   s000_caught_2: "We'll send you off to Popo Town.",
   hisui: 'Hisui',
   galar: 'Galar',
@@ -107,7 +107,7 @@ export const etc: TranslationEtc = {
   tierEpic: 'Epic',
   tierUnique: 'Unique',
   tierLegendary: 'Legendary',
-  s000_welcome_0: 'Welcome to PopoSafari!',
+  s000_welcome_0: 'Welcome to PkmnSOL!',
   s000_welcome_1: 'This is a special safari prepared\nfor you to choose your first Pokémon.',
   s000_welcome_2: 'Approach a Pokémon you want to catch\nand press {{key}}!',
   s000_guide_running: 'Press {{key}} to toggle your Running Shoes on or off.',
