@@ -56,7 +56,23 @@ body.gba-touch {
   background: #0a0a0c;
   overflow: hidden;
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  /* Explicit width/height instead of `inset: 0` — on iOS Safari, a fixed
+     element sized with `inset: 0` fills the LARGEST possible viewport (as
+     if the URL bar/tab strip were already hidden), while
+     window.innerWidth/innerHeight and visualViewport report the CURRENT,
+     chrome-visible (smaller) one. That mismatch is exactly what made
+     layoutScreen()'s JS math disagree with the box it was actually being
+     measured against. dvw/dvh are live-tracked by the browser to match
+     the current viewport, same thing JS reads, so anchoring size to them
+     instead keeps both in agreement. (100vw/100vh first as a fallback for
+     browsers that don't support dvh; the dvh line overrides it where
+     supported, browsers just ignore the value they don't understand.) */
+  width: 100vw;
+  height: 100vh;
+  width: 100dvw;
+  height: 100dvh;
   font-family: 'Press Start 2P', 'Courier New', monospace;
   touch-action: manipulation;
   display: flex;

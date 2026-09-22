@@ -231,6 +231,21 @@ function setupFit(game: Phaser.Game): void {
   window.addEventListener('orientationchange', () => setTimeout(relayout, 250));
   window.visualViewport?.addEventListener('resize', relayout);
 
+  // Belt-and-suspenders for iOS Safari specifically: its chrome (URL bar /
+  // tab strip) can still be animating into its settled size right as the
+  // page loads, so the very first layoutScreen() call (in prepareGbaShell,
+  // before Phaser even exists) can measure a transient viewport that never
+  // fires a 'resize'/'orientationchange' afterward because, as far as the
+  // browser's concerned, nothing ever changed again. A ResizeObserver on
+  // <body> catches that class of change directly (it fires on any real box
+  // resize, chrome-driven or not), and a couple of short delayed passes
+  // catch it even if no observable box resize happens at all.
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(relayout).observe(document.body);
+  }
+  setTimeout(relayout, 200);
+  setTimeout(relayout, 800);
+
   // iOS Safari ignores the viewport meta's user-scalable=no for pinch-zoom
   // (an intentional accessibility override) — block it explicitly so a
   // stray two-finger touch doesn't zoom the page instead of the game.
