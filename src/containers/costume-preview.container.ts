@@ -45,14 +45,23 @@ export class CostumePreview extends Phaser.GameObjects.Container {
   }
 
   private createArrows() {
+    // Same tiny-native-sprite problem as SelectBoxContainer's arrows --
+    // pad the tap target well past the visible glyph in frame-local units.
+    const padX = 20;
+    const padY = 10;
+    const arrowHitArea = (target: GImage) => ({
+      hitArea: new Phaser.Geom.Rectangle(-padX, -padY, target.width + padX * 2, target.height + padY * 2),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      cursor: 'pointer',
+    });
+
     this.arrowLeft = addImage(this.scene, TEXTURE.CURSOR_WHITE, undefined, -320, -20)
       .setScale(2.8)
-      .setFlipX(true)
-      .setInteractive({ cursor: 'pointer' });
+      .setFlipX(true);
+    this.arrowLeft.setInteractive(arrowHitArea(this.arrowLeft));
 
-    this.arrowRight = addImage(this.scene, TEXTURE.CURSOR_WHITE, undefined, +320, -20)
-      .setScale(2.8)
-      .setInteractive({ cursor: 'pointer' });
+    this.arrowRight = addImage(this.scene, TEXTURE.CURSOR_WHITE, undefined, +320, -20).setScale(2.8);
+    this.arrowRight.setInteractive(arrowHitArea(this.arrowRight));
 
     this.add([this.arrowLeft, this.arrowRight]);
 

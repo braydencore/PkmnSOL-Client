@@ -88,7 +88,14 @@ export class ButtonContainer extends Phaser.GameObjects.Container {
   }
 
   private addInteraction(target: GWindow, onAction: () => void) {
-    target.setInteractive({ cursor: 'pointer' });
+    // Pad the tap target a bit past the button's own visible bounds -- a
+    // small margin of forgiveness matters a lot on a real touch screen.
+    const pad = 15;
+    target.setInteractive({
+      hitArea: new Phaser.Geom.Rectangle(-pad, -pad, target.width + pad * 2, target.height + pad * 2),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      cursor: 'pointer',
+    });
 
     target.on('pointerover', () => {
       this.window.setTint(0xcccccc);

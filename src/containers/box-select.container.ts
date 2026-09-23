@@ -101,8 +101,18 @@ export class SelectBoxContainer extends Phaser.GameObjects.Container {
   }
 
   private addArrowEvent(target: GImage, direction: number) {
+    // The arrow glyph itself is tiny (12x28 native px) -- way too small a
+    // tap target on a real phone screen. Pad the hit area well beyond the
+    // visible sprite (in frame-local units, so it scales with it) without
+    // changing how it looks.
+    const padX = 20;
+    const padY = 10;
     target
-      .setInteractive({ cursor: 'pointer' })
+      .setInteractive({
+        hitArea: new Phaser.Geom.Rectangle(-padX, -padY, target.width + padX * 2, target.height + padY * 2),
+        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+        cursor: 'pointer',
+      })
       .on('pointerdown', () => target.setTint(0xcccccc))
       .on('pointerout', () => target.clearTint())
       .on('pointerup', () => {
