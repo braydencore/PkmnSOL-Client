@@ -94,6 +94,18 @@ export abstract class MessageUi extends BaseUi implements IInputHandler, IRefres
 
     this.container.setY(405);
     this.container.add([this.window, this.text, this.hintText]);
+
+    // Tap-to-advance: the message window itself accepts a tap as the bound
+    // CONFIRM key, routed through the same synthetic-keydown path the
+    // touch D-pad/A-button overlay uses (gba-shell.ts). Message dismissal
+    // is otherwise keyboard-only, which strands touch players entirely on
+    // any screen where that floating overlay is hidden (e.g. CreateAvatarPhase's
+    // intro message, DeleteAccountPhase's confirmation copy).
+    this.window.setInteractive({ cursor: 'pointer' }).on('pointerup', () => {
+      if (this.inputLocked) return;
+      const code = this.scene.getKeybind().getBinding(GameAction.CONFIRM);
+      this.scene.input.keyboard?.emit('keydown', { code, repeat: false } as unknown as KeyboardEvent);
+    });
   }
 
   public async showMessage(content: string | string[], config: MessageConfig = {}): Promise<void> {

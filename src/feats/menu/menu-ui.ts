@@ -262,9 +262,32 @@ export class MenuUi extends BaseUi implements IInputHandler, IRefreshableLanguag
       if (hasIcon) (slot.list[0] as any).setX(contentLeft);
       if (label) label.setX(labelX);
       if (count) count.setX(countX);
+
+      this.wireSlotTap(slot, index, finalWidth, this.config.itemHeight!);
     });
 
     this.cursor.setX(contentLeft - this.metrics.cursorGap);
+  }
+
+  /**
+   * Tap directly on a row to select it — this base class otherwise only
+   * responds to D-pad/CONFIRM via onInput(), which strands touch players
+   * on any screen where the floating D-pad/A-button overlay is hidden
+   * (e.g. DeleteAccountPhase's Yes/No prompts).
+   */
+  private wireSlotTap(slot: GContainer, index: number, width: number, height: number): void {
+    slot.setInteractive({
+      hitArea: new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      cursor: 'pointer',
+    });
+    slot.on('pointerup', () => {
+      if (this.items.length === 0) return;
+      this.scene.getAudio().playEffect(SFX.CURSOR_0);
+      this.cursorIndex = index;
+      this.refreshList();
+      this.selectItem();
+    });
   }
 
   private calculateOptimalWidth(): number {
