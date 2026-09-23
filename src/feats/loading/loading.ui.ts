@@ -23,6 +23,22 @@ export class LoadingUi extends BaseUi {
 
   onInput(key: string): void {}
 
+  // LoadingUi covers the full screen (Stage 2's background asset load and
+  // the Pokemon-asset load both show it without a phase switch, since the
+  // underlying phase — Title, OverworldEntryPhase — doesn't change), so the
+  // touch-controls overlay's phase-based hide logic never sees it. Signal
+  // independently so gba-shell.ts can hide the D-pad/buttons for exactly as
+  // long as this is on screen, regardless of what the current phase wants.
+  public show(): void {
+    super.show();
+    window.dispatchEvent(new CustomEvent('poposafari:loading', { detail: { active: true } }));
+  }
+
+  public hide(): void {
+    super.hide();
+    window.dispatchEvent(new CustomEvent('poposafari:loading', { detail: { active: false } }));
+  }
+
   errorEffect(errorMsg: string): void {
     throw new Error('Method not implemented.');
   }

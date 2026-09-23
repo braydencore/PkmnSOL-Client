@@ -200,10 +200,11 @@ body.gba-touch #touch-controls .pill {
   letter-spacing: 0.5px;
 }
 
-/* ----- Map/Run: top corners, out of the way of primary gameplay taps ----- */
+/* ----- Map: top-left corner, out of the way of primary gameplay taps -----
+   Run gets its own rule below: unlike Map, it's tapped constantly while
+   moving, so it lives at the bottom near the thumb instead. ----- */
 body.gba-touch .corner-btn {
   position: absolute;
-  top: max(14px, env(safe-area-inset-top));
   width: 46px;
   height: 26px;
   border-radius: 13px;
@@ -211,10 +212,18 @@ body.gba-touch .corner-btn {
   letter-spacing: 0.5px;
 }
 body.gba-touch .corner-btn.top-left {
+  top: max(14px, env(safe-area-inset-top));
   left: max(14px, env(safe-area-inset-left));
 }
-body.gba-touch .corner-btn.top-right {
-  right: max(14px, env(safe-area-inset-right));
+
+/* ----- Run: bottom-right, stacked just above the A/B cluster -- same
+   corner desktop shows its run-toggle icon in (see TOGGLE_ICONS in
+   overworld-hud.ui.ts), and reachable without moving the thumb off the
+   action pad. #action-pad is 100px tall anchored `bottom: max(18px, safe)`,
+   so this sits right above it with a small gap. ----- */
+body.gba-touch .corner-btn.bottom-right {
+  right: max(18px, env(safe-area-inset-right));
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 114px);
 }
 
 /* ===== Portrait lock: touch mode is landscape-only (see the comment on

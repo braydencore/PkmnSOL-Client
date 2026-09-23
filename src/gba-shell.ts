@@ -213,10 +213,29 @@ function setupFit(game: Phaser.Game): void {
 // menu, account forms, the loading spinner) report hideControls: true,
 // since the floating D-pad/A/B/Start/Select overlay would otherwise sit on
 // top of that UI's own buttons, blocking taps to them.
+//
+// LoadingUi (loading.ui.ts) additionally reports its own show()/hide() via
+// 'poposafari:loading' — it covers the whole screen during Stage 2's
+// background asset load and the Pokemon-asset load WITHOUT a phase switch
+// (the underlying phase, e.g. Title, doesn't change), so those moments
+// would otherwise slip past the phase-based check above and leave the
+// joystick/buttons floating uselessly over the loading bar. Controls stay
+// hidden if EITHER signal wants them hidden.
+let phaseWantsHidden = false;
+let loadingActive = false;
+
+function applyControlsVisibility(): void {
+  document.body.classList.toggle('controls-hidden', phaseWantsHidden || loadingActive);
+}
+
 function watchPhaseForControlsVisibility(): void {
   window.addEventListener('poposafari:phase', (e) => {
-    const hide = (e as CustomEvent<{ hideControls?: boolean }>).detail?.hideControls;
-    document.body.classList.toggle('controls-hidden', !!hide);
+    phaseWantsHidden = !!(e as CustomEvent<{ hideControls?: boolean }>).detail?.hideControls;
+    applyControlsVisibility();
+  });
+  window.addEventListener('poposafari:loading', (e) => {
+    loadingActive = !!(e as CustomEvent<{ active?: boolean }>).detail?.active;
+    applyControlsVisibility();
   });
 }
 
