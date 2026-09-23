@@ -97,6 +97,15 @@ export class ButtonContainer extends Phaser.GameObjects.Container {
       cursor: 'pointer',
     });
 
+    // A quick press-down shrink + spring back is the tactile feedback
+    // players expect from a real mobile-game button, on top of the tint.
+    const pressDown = () => {
+      this.scene.tweens.add({ targets: this, scale: 0.92, duration: 60, ease: 'Quad.easeOut' });
+    };
+    const pressUp = () => {
+      this.scene.tweens.add({ targets: this, scale: 1, duration: 100, ease: 'Back.easeOut' });
+    };
+
     target.on('pointerover', () => {
       this.window.setTint(0xcccccc);
       this.contentText.setTint(0xcccccc);
@@ -105,9 +114,13 @@ export class ButtonContainer extends Phaser.GameObjects.Container {
     target.on('pointerout', () => {
       this.window.clearTint();
       this.contentText.clearTint();
+      pressUp();
     });
 
+    target.on('pointerdown', pressDown);
+
     target.on('pointerup', () => {
+      pressUp();
       onAction();
     });
   }

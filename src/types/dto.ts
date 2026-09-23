@@ -161,7 +161,6 @@ export interface CostumeEntry {
 }
 
 export interface CreateUserReq {
-  nickname: string;
   gender: 'male' | 'female';
   costume: {
     skin: string;

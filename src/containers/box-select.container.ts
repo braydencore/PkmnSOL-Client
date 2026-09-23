@@ -107,16 +107,37 @@ export class SelectBoxContainer extends Phaser.GameObjects.Container {
     // changing how it looks.
     const padX = 20;
     const padY = 10;
+    const baseScale = target.scale;
+    const pressUp = () => {
+      this.scene.tweens.add({
+        targets: target,
+        scale: baseScale,
+        duration: 100,
+        ease: 'Back.easeOut',
+      });
+    };
     target
       .setInteractive({
         hitArea: new Phaser.Geom.Rectangle(-padX, -padY, target.width + padX * 2, target.height + padY * 2),
         hitAreaCallback: Phaser.Geom.Rectangle.Contains,
         cursor: 'pointer',
       })
-      .on('pointerdown', () => target.setTint(0xcccccc))
-      .on('pointerout', () => target.clearTint())
+      .on('pointerdown', () => {
+        target.setTint(0xcccccc);
+        this.scene.tweens.add({
+          targets: target,
+          scale: baseScale * 0.85,
+          duration: 60,
+          ease: 'Quad.easeOut',
+        });
+      })
+      .on('pointerout', () => {
+        target.clearTint();
+        pressUp();
+      })
       .on('pointerup', () => {
         target.clearTint();
+        pressUp();
         if (this.options.length <= 1) return;
 
         this.currentIdx = (this.currentIdx + direction + this.options.length) % this.options.length;

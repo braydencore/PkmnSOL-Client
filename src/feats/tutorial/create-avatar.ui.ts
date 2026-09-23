@@ -15,16 +15,13 @@ import {
   addBackground,
   addContainer,
   addText,
-  addTextInput,
   addWindow,
   getSessionBackgroundKey,
   runShakeEffect,
   toGenderCode,
-  validateNickname,
 } from '@poposafari/utils';
 import { SelectBoxContainer } from '@poposafari/containers/box-select.container';
 import { ButtonContainer } from '@poposafari/containers/button.container';
-import InputText from 'phaser3-rex-plugins/plugins/inputtext';
 import { CostumePreview } from '@poposafari/containers/costume-preview.container';
 
 export class CreateAvatarUi extends BaseUi implements IInputHandler, IRefreshableLanguage {
@@ -53,8 +50,6 @@ export class CreateAvatarUi extends BaseUi implements IInputHandler, IRefreshabl
   private maleBtn!: ButtonContainer;
   private createBtn!: ButtonContainer;
   private errorMsg!: GText;
-  private mainRightNicknameInputWindow!: GWindow;
-  private mainRightNicknameInput!: InputText;
 
   constructor(scene: GameScene) {
     super(scene, scene.getInputManager(), DEPTH.DEFAULT);
@@ -192,31 +187,34 @@ export class CreateAvatarUi extends BaseUi implements IInputHandler, IRefreshabl
     this.preview.create(5, 6);
     this.preview.setY(-180);
 
-    this.femaleBtn.create(TEXTURE.WINDOW_0, 3, SYMBOL_FEMALE, 80, true, () => {
+    // Sized up from the old 3/80 and 2/50 -- with the nickname field gone
+    // there's room for these to read as proper, chunky mobile-game buttons
+    // rather than small icons in boxes.
+    this.femaleBtn.create(TEXTURE.WINDOW_0, 3.6, SYMBOL_FEMALE, 100, true, () => {
       this.updateGender('female');
       this.femaleBtn.updateCursor(true);
       this.maleBtn.updateCursor(false);
       this.preview.updateGender('female');
     });
-    this.maleBtn.create(TEXTURE.WINDOW_0, 3, SYMBOL_MALE, 80, true, () => {
+    this.maleBtn.create(TEXTURE.WINDOW_0, 3.6, SYMBOL_MALE, 100, true, () => {
       this.updateGender('male');
       this.maleBtn.updateCursor(true);
       this.femaleBtn.updateCursor(false);
       this.preview.updateGender('male');
     });
-    this.createBtn.create(TEXTURE.WINDOW_0, 2, i18next.t('etc:create'), 50, false, () => {
+    this.createBtn.create(TEXTURE.WINDOW_0, 2.6, i18next.t('etc:create'), 60, false, () => {
       this.validateAndSubmit();
     });
 
-    this.maleBtn.setPosition(-80, +5);
-    this.femaleBtn.setPosition(+80, +5);
-    this.createBtn.setY(+360);
+    this.maleBtn.setPosition(-90, +40);
+    this.femaleBtn.setPosition(+90, +40);
+    this.createBtn.setY(+220);
     this.preview.updateGender('male');
 
     this.errorMsg = addText(
       this.scene,
       -210,
-      +200,
+      +130,
       '',
       40,
       '100',
@@ -225,46 +223,8 @@ export class CreateAvatarUi extends BaseUi implements IInputHandler, IRefreshabl
       TEXTSHADOW.ERROR,
     ).setOrigin(0, 0);
 
-    this.mainRightNicknameInputWindow = addWindow(
-      this.scene,
-      this.scene.getOption().getWindow(),
-      0,
-      +140,
-      450,
-      80,
-      2.4,
-      16,
-      16,
-      16,
-      16,
-    );
-    this.mainRightNicknameInput = addTextInput(
-      this.scene,
-      -185,
-      +140,
-      30,
-      '100',
-      350,
-      70,
-      TEXTSTYLE.WHITE,
-      {
-        type: 'text',
-        placeholder: i18next.t('etc:enterYourNickname'),
-        minLength: 2,
-        maxLength: 12,
-      },
-    );
-
     this.mainRightContainer.setX(+540);
-    this.mainRightContainer.add([
-      this.maleBtn,
-      this.femaleBtn,
-      this.createBtn,
-      this.errorMsg,
-      this.mainRightNicknameInputWindow,
-      this.mainRightNicknameInput,
-      this.preview,
-    ]);
+    this.mainRightContainer.add([this.maleBtn, this.femaleBtn, this.createBtn, this.errorMsg, this.preview]);
   }
 
   waitForInput(): Promise<CreateUserReq> {
@@ -307,7 +267,7 @@ export class CreateAvatarUi extends BaseUi implements IInputHandler, IRefreshabl
 
   async showGuideMsg() {
     const talk = this.scene.getMessage('talk');
-    await talk.showMessage(i18next.t('etc:createAvatar_intro'), { name: '테스트맨' });
+    await talk.showMessage(i18next.t('etc:createAvatar_intro'), { name: '' });
     this.showContent();
   }
 
@@ -319,17 +279,10 @@ export class CreateAvatarUi extends BaseUi implements IInputHandler, IRefreshabl
   private validateAndSubmit() {
     if (!this.inputResolver) return;
 
-    const nickname = this.mainRightNicknameInput.text;
     const skinId = this.boxSkin.getSelectedId();
     const hairId = this.boxHair.getSelectedId();
     const hairColorId = this.boxHairColor.getSelectedId();
     const outfitId = this.boxOutfit.getSelectedId();
-
-    const nicknameError = validateNickname(nickname);
-    if (nicknameError) {
-      this.errorEffect(i18next.t(`error:${nicknameError}`));
-      return;
-    }
 
     if (!skinId || !hairId || !hairColorId || !outfitId) {
       this.errorEffect(i18next.t('error:INVALID_COSTUME'));
@@ -337,7 +290,6 @@ export class CreateAvatarUi extends BaseUi implements IInputHandler, IRefreshabl
     }
 
     this.inputResolver({
-      nickname: nickname,
       gender: this.currentGender,
       costume: {
         skin: skinId,
@@ -350,8 +302,6 @@ export class CreateAvatarUi extends BaseUi implements IInputHandler, IRefreshabl
 
   onRefreshLanguage(): void {
     this.topTitle.setText(i18next.t('etc:createAvatar'));
-    this.errorMsg.setText(i18next.t('error:EMPTY_NICKNAME'));
-    this.mainRightNicknameInput.placeholder = i18next.t('etc:enterYourNickname');
   }
 
   show(): void {

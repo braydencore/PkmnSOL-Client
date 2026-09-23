@@ -54,14 +54,39 @@ export class CostumePreview extends Phaser.GameObjects.Container {
       hitAreaCallback: Phaser.Geom.Rectangle.Contains,
       cursor: 'pointer',
     });
+    // Press-down shrink + spring back, matching SelectBoxContainer's arrows.
+    const wirePressFeedback = (target: GImage) => {
+      const baseScale = target.scale;
+      const pressUp = () => {
+        this.scene.tweens.add({ targets: target, scale: baseScale, duration: 100, ease: 'Back.easeOut' });
+      };
+      target.setInteractive(arrowHitArea(target));
+      target.on('pointerdown', () => {
+        target.setTint(0xcccccc);
+        this.scene.tweens.add({
+          targets: target,
+          scale: baseScale * 0.85,
+          duration: 60,
+          ease: 'Quad.easeOut',
+        });
+      });
+      target.on('pointerout', () => {
+        target.clearTint();
+        pressUp();
+      });
+      target.on('pointerup', () => {
+        target.clearTint();
+        pressUp();
+      });
+    };
 
     this.arrowLeft = addImage(this.scene, TEXTURE.CURSOR_WHITE, undefined, -320, -20)
       .setScale(2.8)
       .setFlipX(true);
-    this.arrowLeft.setInteractive(arrowHitArea(this.arrowLeft));
+    wirePressFeedback(this.arrowLeft);
 
     this.arrowRight = addImage(this.scene, TEXTURE.CURSOR_WHITE, undefined, +320, -20).setScale(2.8);
-    this.arrowRight.setInteractive(arrowHitArea(this.arrowRight));
+    wirePressFeedback(this.arrowRight);
 
     this.add([this.arrowLeft, this.arrowRight]);
 
