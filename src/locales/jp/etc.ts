@@ -161,4 +161,5 @@ export const etc: TranslationEtc = {
   serverBusy: 'ただいま サーバーが まんいん です。\nしばらくしてから ふたたび おためしください。',
   menuCancel: 'とじる',
   githubNotice: 'オープンソースを じゅんびちゅう です。',
+  chatTitle: 'なにか はなそう...',
 };

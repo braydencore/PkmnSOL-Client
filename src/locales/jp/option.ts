@@ -35,6 +35,7 @@ export const option: TranslationOption = {
   keyMap: 'マップ',
   keyQuickslot: 'クイックスロット',
   keyGrab: 'つかむ(ポケモンボックス)',
+  keyChat: 'チャット',
   keyPressPrompt: 'キーをおしてください',
   keyReserved: 'よやくされたキー',
   keyboardGuide: '{{key}} キーでキーをへんこう',

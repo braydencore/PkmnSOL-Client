@@ -12,6 +12,7 @@ const ACTION_BUTTONS: Record<string, GameAction> = {
   select: GameAction.QUICKSLOT,
   map: GameAction.MAP,
   running: GameAction.RUNNING,
+  chat: GameAction.CHAT,
 };
 
 /** Touch is the PRIMARY input (coarse pointer, no hover) — a touch-capable
@@ -223,9 +224,10 @@ function setupFit(game: Phaser.Game): void {
 // hidden if EITHER signal wants them hidden.
 let phaseWantsHidden = false;
 let loadingActive = false;
+let modalActive = false;
 
 function applyControlsVisibility(): void {
-  document.body.classList.toggle('controls-hidden', phaseWantsHidden || loadingActive);
+  document.body.classList.toggle('controls-hidden', phaseWantsHidden || loadingActive || modalActive);
 }
 
 function watchPhaseForControlsVisibility(): void {
@@ -235,6 +237,12 @@ function watchPhaseForControlsVisibility(): void {
   });
   window.addEventListener('poposafari:loading', (e) => {
     loadingActive = !!(e as CustomEvent<{ active?: boolean }>).detail?.active;
+    applyControlsVisibility();
+  });
+  // Dispatched by in-overworld modals (ChatUi, ...) that open on top of live
+  // gameplay without a phase switch -- see the comment on ChatUi.show().
+  window.addEventListener('poposafari:modal', (e) => {
+    modalActive = !!(e as CustomEvent<{ active?: boolean }>).detail?.active;
     applyControlsVisibility();
   });
 }

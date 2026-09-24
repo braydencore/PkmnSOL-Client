@@ -107,6 +107,17 @@ export interface WildDespawnPayload {
   reason: WildDespawnReason;
 }
 
+/** Sent to the server when the local player submits a chat message. */
+export interface ChatSendPayload {
+  message: string;
+}
+
+/** Broadcast to everyone else in the room when a player sends a chat message. */
+export interface ChatMessagePayload {
+  userId: string;
+  message: string;
+}
+
 export const MOVE_TYPE_DURATION_MS: Record<string, number> = Object.fromEntries(
   Object.entries(MOVEMENT_SPEED).map(([moveType, speed]) => [
     moveType,

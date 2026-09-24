@@ -87,6 +87,8 @@ export class MovableObject extends BaseObject {
   }
 
   update(delta: number): void {
+    this.syncChatBubblePosition();
+
     if (this.movementCheck && this.movementDirectionQueue.length === 0) {
       this.tileSizePixelsWalked = 0;
       const frame = this.getStopFrameNumberFromDirection(this.lastDirection);

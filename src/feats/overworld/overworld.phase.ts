@@ -1,6 +1,7 @@
 import { IGamePhase } from '@poposafari/core';
 import { GameEvent, GameScene } from '@poposafari/scenes';
 import type {
+  ChatMessagePayload,
   OtherPetChangedPayload,
   RoomUserState,
   UsersMovedPayload,
@@ -362,12 +363,16 @@ export class OverworldPhase implements IGamePhase {
       const onWildDespawn = (payload: WildDespawnPayload) => {
         this.overworldUi?.handleWildDespawn(payload);
       };
+      const onChatMessage = (payload: ChatMessagePayload) => {
+        this.overworldUi?.onChatMessage(payload);
+      };
       socket.on('user_joined', onUserJoined);
       socket.on('user_left', onUserLeft);
       socket.on('users_moved', onUsersMoved);
       socket.on('other-pet-change', onOtherPetChanged);
       socket.on('wild:spawn', onWildSpawn);
       socket.on('wild:despawn', onWildDespawn);
+      socket.on('chat_message', onChatMessage);
       this.socketOffFns.push(
         () => socket.off('user_joined', onUserJoined),
         () => socket.off('user_left', onUserLeft),
@@ -375,6 +380,7 @@ export class OverworldPhase implements IGamePhase {
         () => socket.off('other-pet-change', onOtherPetChanged),
         () => socket.off('wild:spawn', onWildSpawn),
         () => socket.off('wild:despawn', onWildDespawn),
+        () => socket.off('chat_message', onChatMessage),
       );
     }
 

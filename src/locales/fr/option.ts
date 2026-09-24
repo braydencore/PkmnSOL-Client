@@ -35,6 +35,7 @@ export const option: TranslationOption = {
   keyMap: 'Carte',
   keyQuickslot: 'Accès rapide',
   keyGrab: 'Attraper (Boîte Pokémon)',
+  keyChat: 'Chat',
   keyPressPrompt: 'Appuyez sur une touche',
   keyReserved: 'Touche réservée',
   keyboardGuide: 'Appuyez sur {{key}} pour changer une touche',

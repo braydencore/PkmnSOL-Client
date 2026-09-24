@@ -17,6 +17,7 @@ import { addContainer, addImage, addText } from '@poposafari/utils';
 import DayNightFilter from '@poposafari/utils/day-night-filter';
 import i18next from 'i18next';
 import { HudTooltipManager } from './hud-tooltip.manager';
+import { isTouchPrimary } from '@poposafari/gba-shell';
 import {
   equippedCostumesToParts,
   getDefaultOverworldKeys,
@@ -80,6 +81,7 @@ type ToggleIconConfig = { texture: TEXTURE; action: GameAction };
 
 const TOGGLE_ICONS: ReadonlyArray<ToggleIconConfig> = [
   { texture: TEXTURE.ICON_REGISTER, action: GameAction.QUICKSLOT },
+  { texture: TEXTURE.ICON_TALK, action: GameAction.CHAT },
   { texture: TEXTURE.ICON_RUNNING, action: GameAction.RUNNING },
   { texture: TEXTURE.ICON_MENU, action: GameAction.MENU },
 ];
@@ -399,6 +401,13 @@ export class OverworldHudUI extends Phaser.GameObjects.Container {
 
     const { width } = this.scene.cameras.main;
     this.toggleIconContainer.setPosition(width / 2 - rightPadding, y);
+
+    // These are physical-keyboard legends (a keycap + letter under each
+    // icon showing which key does what) -- meaningless on a touch device,
+    // which drives the same actions from the floating D-pad/button overlay
+    // instead, and would otherwise sit behind/overlap it in this same
+    // bottom-of-screen corner.
+    if (isTouchPrimary()) this.toggleIconContainer.setVisible(false);
 
     this.refreshMapToggleVisibility();
   }

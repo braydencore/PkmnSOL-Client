@@ -10,6 +10,7 @@ export enum GameAction {
   MAP = 'MAP',
   QUICKSLOT = 'QUICKSLOT',
   GRAB = 'GRAB',
+  CHAT = 'CHAT',
 }
 
 export const KEYBIND_CACHE_KEY = 'poposafari.keybind';
@@ -35,6 +36,7 @@ export const DEFAULT_KEYBINDS: Record<GameAction, string> = {
   [GameAction.MAP]: 'KeyM',
   [GameAction.QUICKSLOT]: 'KeyA',
   [GameAction.GRAB]: 'KeyG',
+  [GameAction.CHAT]: 'KeyT',
 };
 
 /** 옵션 화면에 행으로 나열할 액션 순서. */
@@ -50,6 +52,7 @@ export const KEYBIND_ACTION_ORDER: GameAction[] = [
   GameAction.MAP,
   GameAction.QUICKSLOT,
   GameAction.GRAB,
+  GameAction.CHAT,
 ];
 
 /** 액션 → 옵션 화면 라벨 i18n 키. */
@@ -65,6 +68,7 @@ export const KEYBIND_ACTION_I18N: Record<GameAction, string> = {
   [GameAction.MAP]: 'option:keyMap',
   [GameAction.QUICKSLOT]: 'option:keyQuickslot',
   [GameAction.GRAB]: 'option:keyGrab',
+  [GameAction.CHAT]: 'option:keyChat',
 };
 
 /** 특수 키(event.code) → 표시 라벨 매핑. 목록에 없으면 codeToLabel이 규칙 기반으로 처리. */

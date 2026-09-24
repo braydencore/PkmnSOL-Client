@@ -505,6 +505,7 @@ export class OtherPlayerObject extends BaseObject {
   }
 
   update(delta: number): void {
+    this.syncChatBubblePosition();
     this.pet?.update(delta);
     if (this.baseSurfSprite) this.syncBaseSurf();
   }

@@ -52,6 +52,7 @@ import {
   WildPokemonObject,
 } from './objects';
 import { OverworldHudUI } from './overworld-hud.ui';
+import { ChatUi } from './chat.ui';
 import i18next from '@poposafari/i18n';
 import DayNightFilter from '@poposafari/utils/day-night-filter';
 import CaveFilter from '@poposafari/utils/cave-filter';
@@ -146,6 +147,8 @@ const DIR_KEYS: { dir: DIRECTION; key: keyof KeyState }[] = [
 export class OverworldUi extends BaseUi {
   scene!: GameScene;
   private hud: OverworldHudUI | null = null;
+  private chatUi: ChatUi | null = null;
+  private chatActionPending = false;
   private newbieRestricted: boolean = false;
   private mapView: MapView | null = null;
   private mapConfig: MapConfig | null = null;
@@ -376,9 +379,39 @@ export class OverworldUi extends BaseUi {
       case GameAction.CONFIRM:
         void this.handleTalkAction();
         break;
+      case GameAction.CHAT:
+        void this.handleChatAction();
+        break;
       default:
         break;
     }
+  }
+
+  private async handleChatAction(): Promise<void> {
+    if (this.chatActionPending || !this.chatUi) return;
+    this.chatActionPending = true;
+    try {
+      const result = await this.chatUi.open();
+      if (result.confirmed && result.value) {
+        this.sendChat(result.value);
+      }
+    } finally {
+      this.chatActionPending = false;
+    }
+  }
+
+  /** Sends a chat message to the room and shows it above the local player's
+   * own head immediately -- the server only echoes it back to everyone
+   * ELSE, so we don't wait on a round trip to see our own message. */
+  private sendChat(message: string): void {
+    this.player?.showChatBubble(message);
+    this.scene.getSocket()?.emit('chat', { message });
+  }
+
+  /** Called from OverworldPhase when 'chat_message' comes in for someone
+   * else in the room. */
+  onChatMessage(payload: { userId: string; message: string }): void {
+    this.otherPlayers.get(payload.userId)?.showChatBubble(payload.message);
   }
 
   private async handleTalkAction(): Promise<void> {
@@ -1730,6 +1763,8 @@ export class OverworldUi extends BaseUi {
     this.hud.show();
     this.syncRunningToggleIcon();
 
+    this.chatUi = new ChatUi(this.scene);
+
     if (this.mapConfig && this.mapConfig.showLocationBanner !== false) {
       const area = this.scene.getMasterData().getMapArea(this.mapConfig.key);
       this.hud.showLocationBanner(area, this.mapConfig.key);
@@ -1815,6 +1850,11 @@ export class OverworldUi extends BaseUi {
       this.hud.destroy();
       this.hud = null;
     }
+    if (this.chatUi) {
+      this.chatUi.destroy();
+      this.chatUi = null;
+    }
+    this.chatActionPending = false;
 
     for (const obj of this.safariObjects) {
       obj.destroy();

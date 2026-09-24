@@ -161,4 +161,5 @@ export const etc: TranslationEtc = {
   serverBusy: 'Le serveur est plein.\nVeuillez réessayer plus tard.',
   menuCancel: 'QUITTER',
   githubNotice: 'Le code open source est en préparation.',
+  chatTitle: 'Dis quelque chose...',
 };

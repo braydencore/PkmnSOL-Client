@@ -157,4 +157,5 @@ export const etc: TranslationEtc = {
   serverBusy: '현재 서버 접속 인원이 가득 찼습니다.\n잠시 후에 다시 시도해 주세요.',
   menuCancel: '닫는다',
   githubNotice: '오픈 소스를 준비 중입니다.',
+  chatTitle: '무언가 말해보세요...',
 };

@@ -200,9 +200,9 @@ body.gba-touch #touch-controls .pill {
   letter-spacing: 0.5px;
 }
 
-/* ----- Map: top-left corner, out of the way of primary gameplay taps -----
-   Run gets its own rule below: unlike Map, it's tapped constantly while
-   moving, so it lives at the bottom near the thumb instead. ----- */
+/* ----- Map & Chat: top corners, out of the way of primary gameplay taps --
+   both are occasional taps, not held-down-while-moving ones, unlike Run
+   below which lives at the bottom near the thumb instead. ----- */
 body.gba-touch .corner-btn {
   position: absolute;
   width: 46px;
@@ -214,6 +214,10 @@ body.gba-touch .corner-btn {
 body.gba-touch .corner-btn.top-left {
   top: max(14px, env(safe-area-inset-top));
   left: max(14px, env(safe-area-inset-left));
+}
+body.gba-touch .corner-btn.top-right {
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
 }
 
 /* ----- Run: bottom-right, stacked just above the A/B cluster -- same
