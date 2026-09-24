@@ -30,6 +30,7 @@ import { CountdownPhase } from '@poposafari/feats/countdown';
 import { MapBuilder, OverworldEntryPhase, OverworldPhase } from '@poposafari/feats/overworld';
 import { CreateAvatarPhase } from '@poposafari/feats/tutorial';
 import { DeleteAccountPhase } from '@poposafari/feats/delete-account/delete-account.phase';
+import { TitlePhase } from '@poposafari/feats/title';
 import { DIRECTION } from '@poposafari/feats/overworld/overworld.constants';
 import { BaseScene } from '@poposafari/scenes';
 import { GetMeRes, TEXTURE } from '@poposafari/types';
@@ -737,13 +738,16 @@ export class GameScene extends BaseScene {
    * field and button is already tap/click-native, no D-pad or A-button
    * needed. LoadingPhase has nothing to interact with either way.
    *
-   * Title and Welcome are deliberately NOT in this list even though
-   * they're also "pre-game": Title's CONTINUE/NEWGAME/etc menu is
-   * keyboard-navigated (up/down + confirm) with no tappable on-canvas
-   * equivalent, and Welcome shows a dialogue message advanced the same
-   * way overworld dialogue is — A to continue. Hiding controls there
-   * doesn't prevent an overlap, it removes the only way to interact with
-   * the screen at all on a touch device.
+   * Welcome is deliberately NOT in this list even though it's also
+   * "pre-game": it shows a dialogue message advanced the same way
+   * overworld dialogue is — A to continue — with no tappable on-canvas
+   * equivalent. Hiding controls there removes the only way to interact
+   * with the screen at all on a touch device.
+   *
+   * Title used to be excluded for the same reason (its PLAY/OPTION/LOGOUT
+   * menu was keyboard-only), but title.ui.ts now makes each entry directly
+   * tappable, so hiding the D-pad overlay there no longer strands touch
+   * players.
    *
    * Checked via `instanceof` rather than a name string: production
    * builds mangle class names, so `constructor.name` isn't reliable here. */
@@ -753,7 +757,8 @@ export class GameScene extends BaseScene {
       phase instanceof LoginPhase ||
       phase instanceof RegisterPhase ||
       phase instanceof DeleteAccountPhase ||
-      phase instanceof CreateAvatarPhase;
+      phase instanceof CreateAvatarPhase ||
+      phase instanceof TitlePhase;
     window.dispatchEvent(new CustomEvent('poposafari:phase', { detail: { hideControls: isNonGameplay } }));
   }
 

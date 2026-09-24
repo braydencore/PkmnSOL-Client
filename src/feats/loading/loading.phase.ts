@@ -148,7 +148,6 @@ export class LoadingPhase implements IGamePhase {
       this.scene.loadImage(TEXTURE.WINDOW_3, 'ui/windows', 'window_3_solara');
       this.scene.loadImage(TEXTURE.ICON_GOOGLE, 'ui/icons', 'icon_google');
       this.scene.loadImage(TEXTURE.ICON_DISCORD, 'ui/icons', 'icon_discord');
-      this.scene.loadImage(TEXTURE.LOGO_GITHUB, 'ui', 'logo_github');
       this.scene.loadImage(TEXTURE.LOGO_DISCORD, 'ui', 'logo_discord');
       this.scene.loadAudio(SFX.OPEN_0, 'audio/se', 'open_0', 'ogg');
       this.scene.loadAudio(SFX.CURSOR_0, 'audio/se', 'cursor_0', 'ogg');
@@ -742,7 +741,7 @@ export class LoadingPhase implements IGamePhase {
   }
 
   private loadImageAndSprite() {
-    // BG_1..BG_12, WINDOW_1..WINDOW_3, ICON_GOOGLE/DISCORD, LOGO_GITHUB/DISCORD are
+    // BG_1..BG_12, WINDOW_1..WINDOW_3, ICON_GOOGLE/DISCORD, LOGO_DISCORD are
     // already loaded by Stage 1 (loadStage1Assets) — Login/Title need them before
     // this deferred load even starts.
     this.scene.loadImage(TEXTURE.BG_BLACK, 'ui/bgs', 'bg_black');

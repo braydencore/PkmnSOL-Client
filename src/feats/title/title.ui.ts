@@ -25,7 +25,7 @@ import {
   KeyGuideBarContainer,
   type KeyGuideBarOptions,
 } from '@poposafari/containers/key-guide-bar.container';
-import { TypingTextContainer } from '@poposafari/containers/typing-text.container';
+import { isTouchPrimary } from '@poposafari/gba-shell';
 
 export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLanguage {
   scene: GameScene;
@@ -41,28 +41,23 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
   private title!: GImage;
 
   private static readonly MAIN_TITLE_KEYS = ['etc:play', 'etc:option', 'etc:logout'] as const;
+  private static readonly MAIN_TITLE_INPUTS: TitleUiInput[] = ['play', 'option', 'logout'];
 
   private mainContainer!: GContainer;
   private mainTexts: GText[] = [];
   private mainTitles: string[] = TitleUi.MAIN_TITLE_KEYS.map((k) => i18next.t(k));
 
-  private versionText!: GText;
+  private versionText?: GText;
   private playersOnline: number = 0;
   private playerOnlineContainer!: GContainer;
   private playerOnlineDot!: Phaser.GameObjects.Graphics;
   private playersOnlineText!: GText;
-  private inputGuide!: KeyGuideBarContainer;
+  private inputGuide: KeyGuideBarContainer | null = null;
 
   private socialContainer!: GContainer;
-  private githubBg!: Phaser.GameObjects.Graphics;
-  private githubLogo!: GImage;
-  private githubOverlay!: Phaser.GameObjects.Graphics;
   private discordBg!: Phaser.GameObjects.Graphics;
   private discordLogo!: GImage;
   private discordOverlay!: Phaser.GameObjects.Graphics;
-
-  // 오픈 소스 비공개 상태 — Github 클릭 시 타이핑 효과로 안내 문구를 출력한다.
-  private githubNotice!: TypingTextContainer;
 
   constructor(scene: GameScene) {
     super(scene, scene.getInputManager(), DEPTH.DEFAULT);
@@ -77,17 +72,7 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
   onInput(key: string, action: GameAction | null): void {
     if (action === GameAction.CONFIRM) {
       this.audio.playEffect(SFX.CURSOR_0);
-
-      if (this.inputResolver) {
-        const inputMap: Record<string, TitleUiInput> = {
-          [i18next.t('etc:play')]: 'play',
-          [i18next.t('etc:option')]: 'option',
-          [i18next.t('etc:logout')]: 'logout',
-        };
-        const input = inputMap[this.mainTitles[this.currentCursor]] ?? 'logout';
-        this.inputResolver({ input, cursorIndex: this.currentCursor });
-        this.inputResolver = null;
-      }
+      this.confirmSelection(this.currentCursor);
       return;
     }
     switch (key) {
@@ -100,6 +85,14 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
         this.moveCursor(1);
         break;
     }
+  }
+
+  private confirmSelection(index: number): void {
+    if (!this.inputResolver) return;
+
+    const input = TitleUi.MAIN_TITLE_INPUTS[index] ?? 'logout';
+    this.inputResolver({ input, cursorIndex: index });
+    this.inputResolver = null;
   }
 
   errorEffect(errorMsg: string): void {
@@ -137,36 +130,51 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
     this.createMainLayout();
     this.createPlayerOnlineLayout();
     this.createSocialLinks();
-    this.createInputGuide();
 
-    this.add([
+    // The keyboard-hint bar ("arrow keys to move / confirm") is meaningless
+    // on a touch device -- title.ui.ts's PLAY/OPTION/LOGOUT entries are
+    // directly tappable there, and the guide would just be confusing
+    // leftover text with no keyboard in sight. Skip it entirely for touch;
+    // desktop players still get it since the menu stays keyboard-navigated.
+    const children: Phaser.GameObjects.GameObject[] = [
       this.bg,
       this.topContainer,
       this.mainContainer,
       this.playerOnlineContainer,
       this.socialContainer,
-      this.inputGuide,
-    ]);
+    ];
+    if (!isTouchPrimary()) {
+      this.inputGuide = this.createInputGuide();
+      children.push(this.inputGuide);
+    }
+    this.add(children);
   }
 
   createTopLayout() {
     this.topContainer = addContainer(this.scene, DEPTH.DEFAULT);
     this.title = addImage(this.scene, TEXTURE.LOGO_0, undefined, 0, 0).setScale(0.4625);
 
-    this.versionText = addText(
-      this.scene,
-      this.title.displayWidth / 2,
-      this.title.displayHeight / 2,
-      __BUILD_VERSION__,
-      60,
-      '100',
-      'right',
-      TEXTSTYLE.YELLOW,
-      TEXTSHADOW.GRAY,
-    ).setOrigin(1, 0);
-
     this.topContainer.setY(-400);
-    this.topContainer.add([this.title, this.versionText]);
+    this.topContainer.add([this.title]);
+
+    // __BUILD_VERSION__ falls back to the literal string "dev" whenever the
+    // repo has no git tag checked out (true for every non-release build) --
+    // showing that to players reads as a stray debug leftover, so only
+    // surface it once real release tags exist.
+    if (__BUILD_VERSION__ !== 'dev' && __BUILD_VERSION__ !== 'unknown') {
+      this.versionText = addText(
+        this.scene,
+        this.title.displayWidth / 2,
+        this.title.displayHeight / 2,
+        __BUILD_VERSION__,
+        60,
+        '100',
+        'right',
+        TEXTSTYLE.YELLOW,
+        TEXTSHADOW.GRAY,
+      ).setOrigin(1, 0);
+      this.topContainer.add(this.versionText);
+    }
   }
 
   private createPlayerOnlineLayout() {
@@ -203,6 +211,22 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
     this.playersOnlineText.setText(i18next.t('etc:playersOnline', { value }));
   }
 
+  private static readonly HIT_PAD_X = 80;
+  private static readonly HIT_PAD_Y = 30;
+
+  // Text width changes with language (Korean/Japanese glyphs run narrower
+  // or wider than English), so the tap hit area is recomputed here rather
+  // than baked in once -- called on creation and again after every
+  // onRefreshLanguage() setText().
+  private syncMainTextHitArea(text: GText): void {
+    text.input!.hitArea = new Phaser.Geom.Rectangle(
+      -text.width / 2 - TitleUi.HIT_PAD_X,
+      -text.height / 2 - TitleUi.HIT_PAD_Y,
+      text.width + TitleUi.HIT_PAD_X * 2,
+      text.height + TitleUi.HIT_PAD_Y * 2,
+    );
+  }
+
   createMainLayout() {
     const contentHeight = 80;
     const contentSpacing = 20;
@@ -211,30 +235,51 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
 
     this.mainContainer = addContainer(this.scene, DEPTH.DEFAULT);
 
-    for (const title of this.mainTitles) {
-      this.mainTexts.push(
-        addText(
-          this.scene,
-          0,
-          currentY,
-          title,
-          80,
-          '100',
-          'center',
-          TEXTSTYLE.WHITE,
-          TEXTSHADOW.GRAY,
-        ),
+    this.mainTitles.forEach((title, index) => {
+      const text = addText(
+        this.scene,
+        0,
+        currentY,
+        title,
+        80,
+        '100',
+        'center',
+        TEXTSTYLE.WHITE,
+        TEXTSHADOW.GRAY,
       );
 
+      // Directly tappable: touch players have no keyboard, so tapping an
+      // entry both selects and confirms it in one motion. Hit area is
+      // padded well past the glyphs themselves for a comfortable finger
+      // target, same idea as the login screen's button windows.
+      text.setInteractive({
+        hitArea: new Phaser.Geom.Rectangle(0, 0, text.width, text.height),
+        hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+        useHandCursor: true,
+      });
+      this.syncMainTextHitArea(text);
+      text.on('pointerover', () => {
+        this.currentCursor = index;
+        this.updateCursor();
+      });
+      text.on('pointerup', () => {
+        this.audio.playEffect(SFX.CURSOR_0);
+        this.currentCursor = index;
+        this.updateCursor();
+        this.confirmSelection(index);
+      });
+
+      this.mainTexts.push(text);
       currentY += contentHeight + contentSpacing;
-    }
+    });
     this.mainContainer.add(this.mainTexts);
   }
 
-  private createInputGuide() {
-    this.inputGuide = new KeyGuideBarContainer(this.scene);
-    this.inputGuide.create(this.buildInputGuideOptions());
-    this.inputGuide.setPosition(+930, +500);
+  private createInputGuide(): KeyGuideBarContainer {
+    const guide = new KeyGuideBarContainer(this.scene);
+    guide.create(this.buildInputGuideOptions());
+    guide.setPosition(+930, +500);
+    return guide;
   }
 
   private drawSocialBg(
@@ -254,42 +299,25 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
   private createSocialLinks() {
     const BG_PADDING_X = 18;
     const BG_PADDING_Y = 10;
-    const BUTTON_GAP = 16;
     const BG_ALPHA = 0.8;
-    const GITHUB_COLOR = 0xffffff;
     const DISCORD_COLOR = 0x5865f2;
     const ANCHOR_LEFT_X = -940;
-    const GITHUB_URL = '';
     const DISCORD_URL = 'https://discord.gg/uqt7cqqT23';
     const TINT_GRAY = 0xcccccc;
 
     this.socialContainer = addContainer(this.scene, DEPTH.DEFAULT);
 
-    this.githubLogo = addImage(this.scene, TEXTURE.LOGO_GITHUB, undefined, 0, 0);
     this.discordLogo = addImage(this.scene, TEXTURE.LOGO_DISCORD, undefined, 0, 0);
 
     const bgHeight = this.discordLogo.displayHeight + BG_PADDING_Y * 2;
-    const githubBgW = this.githubLogo.displayWidth + BG_PADDING_X * 2;
     const discordBgW = this.discordLogo.displayWidth + BG_PADDING_X * 2;
     const bgRadius = bgHeight / 2;
 
-    const githubX = 0;
-    const discordX = githubBgW / 2 + BUTTON_GAP + discordBgW / 2;
+    const discordX = 0;
 
-    this.githubLogo.setPosition(githubX, 0);
     this.discordLogo.setPosition(discordX, 0);
 
-    this.githubBg = this.scene.add.graphics();
     this.discordBg = this.scene.add.graphics();
-    this.drawSocialBg(
-      this.githubBg,
-      githubX,
-      githubBgW,
-      bgHeight,
-      bgRadius,
-      GITHUB_COLOR,
-      BG_ALPHA,
-    );
     this.drawSocialBg(
       this.discordBg,
       discordX,
@@ -299,23 +327,6 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
       DISCORD_COLOR,
       BG_ALPHA,
     );
-
-    this.githubBg.setInteractive({
-      hitArea: new Phaser.Geom.Rectangle(
-        githubX - githubBgW / 2,
-        -bgHeight / 2,
-        githubBgW,
-        bgHeight,
-      ),
-      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-      useHandCursor: true,
-    });
-    this.githubBg.on('pointerover', () => this.githubOverlay.setVisible(true));
-    this.githubBg.on('pointerout', () => this.githubOverlay.setVisible(false));
-    this.githubBg.on('pointerdown', () => {
-      // window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
-      this.showGithubNotice();
-    });
 
     this.discordBg.setInteractive({
       hitArea: new Phaser.Geom.Rectangle(
@@ -333,18 +344,6 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
       window.open(DISCORD_URL, '_blank', 'noopener,noreferrer');
     });
 
-    this.githubOverlay = this.scene.add.graphics();
-    this.githubOverlay.fillStyle(TINT_GRAY, 1);
-    this.githubOverlay.fillRoundedRect(
-      githubX - githubBgW / 2,
-      -bgHeight / 2,
-      githubBgW,
-      bgHeight,
-      bgRadius,
-    );
-    this.githubOverlay.setBlendMode(Phaser.BlendModes.MULTIPLY);
-    this.githubOverlay.setVisible(false);
-
     this.discordOverlay = this.scene.add.graphics();
     this.discordOverlay.fillStyle(TINT_GRAY, 1);
     this.discordOverlay.fillRoundedRect(
@@ -357,35 +356,8 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
     this.discordOverlay.setBlendMode(Phaser.BlendModes.MULTIPLY);
     this.discordOverlay.setVisible(false);
 
-    this.githubNotice = new TypingTextContainer(
-      this.scene,
-      githubX - githubBgW / 2 + 20,
-      -bgHeight / 2 - 10,
-      {
-        fontSize: 40,
-        textStyle: TEXTSTYLE.WHITE,
-        textShadow: TEXTSHADOW.GRAY,
-        typeSpeed: 10,
-        hideDelay: 3000,
-      },
-    );
-    this.githubNotice.getText().setOrigin(0, 1);
-
-    this.socialContainer.setPosition(ANCHOR_LEFT_X + githubBgW / 2, +500);
-    this.socialContainer.add([
-      this.githubBg,
-      this.discordBg,
-      this.githubLogo,
-      this.discordLogo,
-      this.githubOverlay,
-      this.discordOverlay,
-      this.githubNotice,
-    ]);
-  }
-
-  private showGithubNotice(): void {
-    this.audio.playEffect(SFX.CURSOR_0);
-    this.githubNotice.typeOut(i18next.t('etc:githubNotice'));
+    this.socialContainer.setPosition(ANCHOR_LEFT_X + discordBgW / 2, +500);
+    this.socialContainer.add([this.discordBg, this.discordLogo, this.discordOverlay]);
   }
 
   /**
@@ -427,6 +399,7 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
       const key = TitleUi.MAIN_TITLE_KEYS[i];
       this.mainTitles[i] = i18next.t(key);
       this.mainTexts[i].setText(this.mainTitles[i]);
+      this.syncMainTextHitArea(this.mainTexts[i]);
     }
 
     this.updateCursor();
@@ -434,7 +407,8 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
     this.playersOnlineText.setText(i18next.t('etc:playersOnline', { value: this.playersOnline }));
 
     // 키캡(`방향키` 등)의 폭이 언어에 따라 달라지므로 전체 재빌드. transform(setPosition) 유지됨.
-    this.inputGuide.recreate(this.buildInputGuideOptions());
+    // Only exists on desktop (isTouchPrimary() skips it entirely) -- see createLayout().
+    this.inputGuide?.recreate(this.buildInputGuideOptions());
   }
 
   show(): void {
