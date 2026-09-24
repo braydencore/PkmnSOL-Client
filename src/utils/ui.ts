@@ -24,9 +24,24 @@ export function addContainer(scene: Phaser.Scene, depth: number, x: number = 0, 
 }
 
 export function addBackground(scene: Phaser.Scene, texture: TEXTURE | string) {
-  const { width, height } = scene.scale;
   const ret = scene.add.image(0, 0, texture).setOrigin(0.5);
-  ret.setDisplaySize(width, height);
+  ret.setDisplaySize(scene.scale.width, scene.scale.height);
+
+  // Touch mode's logical canvas can resize mid-session (see gba-shell.ts's
+  // computeTouchGameSize()/applySize(), which grows it to match the
+  // device's real aspect ratio) -- without this, a background sized once
+  // at creation stays its original size, leaving a black gap where the
+  // canvas grew. Backgrounds are the only thing in this codebase that
+  // fills to the literal canvas edge; everything else positions off
+  // center, so it doesn't need to track a resize at all.
+  const onResize = (): void => {
+    if (!ret.active) return;
+    ret.setDisplaySize(scene.scale.width, scene.scale.height);
+  };
+  scene.scale.on(Phaser.Scale.Events.RESIZE, onResize);
+  ret.once(Phaser.GameObjects.Events.DESTROY, () => {
+    scene.scale.off(Phaser.Scale.Events.RESIZE, onResize);
+  });
 
   return ret;
 }

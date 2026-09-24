@@ -27,6 +27,45 @@ export function isTouchPrimary(): boolean {
   );
 }
 
+const DESIGN_HEIGHT = 1080;
+const MIN_DESIGN_WIDTH = 1920; // never render narrower than the original 16:9 design
+const MAX_DESIGN_WIDTH = 2700; // sanity ceiling for garbage aspect ratios only -- comfortably
+// covers every real phone (even an extreme 21:9 needs ~2520 at height 1080)
+
+/**
+ * Touch mode is landscape-only, so #app's aspect ratio here is always the
+ * device's actual screen aspect. Phaser.Scale.FIT holds a fixed 1920x1080
+ * logical canvas and letterboxes anything wider in CSS, *outside* the
+ * canvas element entirely — dead space Phaser can't draw into, and nearly
+ * every modern phone in landscape is wider than 16:9 (19.5:9-21:9 typical).
+ *
+ * computeTouchGameSize() sizes the logical canvas to the device's real
+ * aspect ratio instead, height pinned at 1080 so every screen's pixel-tuned
+ * offsets/font sizes keep their exact visual scale — only the width grows.
+ * Center-anchored UI (how every screen already positions things) doesn't
+ * need to move, it just gets more breathing room; the overworld camera
+ * shows more environment on the sides instead of black bars.
+ *
+ * Guarded against garbage viewport reads (0/NaN, seen transiently on iOS
+ * Safari during layout churn) and clamped to a sane range -- this feeds
+ * Phaser.Scale.NONE + setGameSize(), so a bad value here would resize the
+ * actual WebGL canvas/context, not just misdraw a frame.
+ */
+export function computeTouchGameSize(): { width: number; height: number } {
+  const fallback = { width: MIN_DESIGN_WIDTH, height: DESIGN_HEIGHT };
+  const w = window.visualViewport?.width ?? window.innerWidth;
+  const h = window.visualViewport?.height ?? window.innerHeight;
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return fallback;
+
+  const aspect = w / h;
+  if (!Number.isFinite(aspect) || aspect <= 0) return fallback;
+
+  const width = Math.round(
+    Math.min(MAX_DESIGN_WIDTH, Math.max(MIN_DESIGN_WIDTH, DESIGN_HEIGHT * aspect)),
+  );
+  return { width, height: DESIGN_HEIGHT };
+}
+
 /** Reads the player's current keybind for an action (respecting any rebind
  * made in the Options screen), falling back to the default if unset. */
 function getBoundCode(action: GameAction): string {
@@ -174,20 +213,80 @@ function wireActionButtons(scene: Phaser.Scene): void {
 
 /**
  * #app fills the viewport directly via CSS (dvw/dvh, see style.css) — no
- * pixel math needed here at all, so Phaser's own Scale.FIT (which watches
- * its parent via a ResizeObserver) just works. This is only a defensive
- * nudge on top of that: iOS Safari's orientation-change/chrome-resize
- * timing is occasionally flaky enough that an explicit refresh (after
- * layout has actually settled) is cheap, safe insurance.
+ * pixel math needed here at all for Scale.FIT (desktop), which watches its
+ * parent via a ResizeObserver and just works.
+ *
+ * Touch mode runs Scale.NONE instead, with computeTouchGameSize() sizing
+ * the logical canvas by hand -- see that function's comment. Plain
+ * 'resize'/visualViewport 'resize' events fire often and transiently on
+ * iOS Safari (URL bar show/hide, keyboard toggle, mid-gesture layout
+ * churn), so re-sizing the actual WebGL canvas/context on every single one
+ * — especially while a scene transition is already in flight, e.g. right
+ * as PLAY connects to the overworld — risks corrupting Phaser's render
+ * state rather than just misdrawing a frame. Each of those calls refresh()
+ * immediately (cheap; just re-syncs input-coordinate mapping against the
+ * live CSS box) but only *debounces* a logical resize, so a burst of them
+ * collapses into a single setGameSize() once things go quiet — see
+ * debouncedApplySize() below. The staggered initial-settle checks and
+ * orientationchange are deliberate single-shot events, not a continuous
+ * stream, so those call setGameSize() immediately instead.
  */
 function setupFit(game: Phaser.Game): void {
+  const isTouchMode = document.body.classList.contains('gba-touch');
+
   const refresh = (): void => {
     game.scale.refresh();
   };
 
-  window.addEventListener('resize', refresh);
-  window.addEventListener('orientationchange', () => setTimeout(refresh, 250));
-  window.visualViewport?.addEventListener('resize', refresh);
+  const applySize = (): void => {
+    if (!isTouchMode) return;
+    try {
+      const { width, height } = computeTouchGameSize();
+      if (width !== game.scale.width || height !== game.scale.height) {
+        game.scale.setGameSize(width, height);
+        // Scale.NONE doesn't auto-propagate a game-size change to each
+        // scene's camera viewport the way FIT's own resize handling does --
+        // without this, the camera keeps its previous (now stale) width,
+        // leaving the newly-added canvas area an unrendered black gap.
+        const scene = game.scene.getScene(SCENE_KEY);
+        scene?.cameras?.main?.setSize(width, height);
+      }
+    } catch {
+      // Never let a bad viewport read here take the game down mid-session.
+    }
+  };
+
+  // Plain resize/visualViewport events fire often and transiently on iOS
+  // Safari (URL bar show/hide, keyboard toggle, mid-gesture layout churn) --
+  // reacting to every single one by resizing the actual WebGL canvas/context
+  // risks corrupting Phaser's render state mid-scene-transition rather than
+  // just misdrawing a frame. Debounced instead of ignored: the CSS box
+  // (#app is 100dvw/100dvh) already tracks the live viewport continuously,
+  // so a burst of these just needs refresh() (cheap input-coordinate remap)
+  // right away; only once they've gone quiet for a beat does the logical
+  // canvas size get corrected to match, so a real settled change (like the
+  // URL bar actually staying hidden) doesn't leave the canvas stretched to
+  // a stale aspect ratio forever.
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const debouncedApplySize = (): void => {
+    if (debounceTimer !== null) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+      applySize();
+      refresh();
+    }, 400);
+  };
+  const onTransientResize = (): void => {
+    refresh();
+    debouncedApplySize();
+  };
+
+  window.addEventListener('resize', onTransientResize);
+  window.addEventListener('orientationchange', () => setTimeout(() => {
+    applySize();
+    refresh();
+  }, 250));
+  window.visualViewport?.addEventListener('resize', onTransientResize);
 
   // A freshly-launched iOS standalone web app (opened from its Home Screen
   // icon, not a browser tab) settles its viewport a beat after Phaser's
@@ -199,8 +298,15 @@ function setupFit(game: Phaser.Game): void {
   // stuck reading against a stale rect, showing typed text in the wrong
   // spot on the very first screen (the login form). These staggered
   // refreshes are cheap insurance against that race — they no-op once the
-  // scale manager has nothing to correct.
-  [100, 400, 1000].forEach((ms) => setTimeout(refresh, ms));
+  // scale manager has nothing to correct. Also the only place besides
+  // orientationchange that re-sizes the touch-mode logical canvas, since by
+  // ~1s in, the viewport has reliably settled for the rest of the session.
+  [100, 400, 1000].forEach((ms) =>
+    setTimeout(() => {
+      applySize();
+      refresh();
+    }, ms),
+  );
 
   // iOS Safari ignores the viewport meta's user-scalable=no for pinch-zoom
   // (an intentional accessibility override) — block it explicitly so a
