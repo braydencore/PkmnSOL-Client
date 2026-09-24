@@ -13,7 +13,7 @@ import {
   TEXTSTYLE,
   TEXTURE,
 } from '@poposafari/types';
-import { addBackground, addImage, addText, screenFadeIn } from '@poposafari/utils';
+import { addImage, addText, screenFadeIn } from '@poposafari/utils';
 import i18next from '@poposafari/i18n';
 import { ItemDetailContainer } from '@poposafari/containers/item-detail.container';
 import { MenuListUi } from '../menu/menu-list.ui';
@@ -149,7 +149,11 @@ export abstract class BaseBagUi extends BaseUi implements IInputHandler, IRefres
   }
 
   createLayout(): void {
-    this.background = addBackground(this.scene, this.getBackgroundTexture());
+    const screenWidth = this.scene.scale.width;
+    const screenHeight = this.scene.scale.height;
+
+    this.background = addImage(this.scene, this.getBackgroundTexture(), undefined, 0, 0);
+    this.background.setDisplaySize(screenWidth, screenHeight);
     this.add(this.background);
 
     const headerLayout = this.getHeaderLayout();
