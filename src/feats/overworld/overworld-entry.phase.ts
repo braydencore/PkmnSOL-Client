@@ -35,9 +35,10 @@ export class OverworldEntryPhase implements IGamePhase {
   ) {}
 
   async enter(): Promise<void> {
-    this.ui = new OverworldEntryUi(this.scene);
-    this.ui.show();
-    this.pokemonAssetsReady = this.scene.ensurePokemonAssets();
+    const ui = new OverworldEntryUi(this.scene);
+    this.ui = ui;
+    ui.show();
+    this.pokemonAssetsReady = this.scene.ensurePokemonAssets(ui);
 
     let socket = this.scene.getSocket();
 

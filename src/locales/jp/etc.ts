@@ -2,6 +2,7 @@ import type { TranslationEtc } from '../ko/etc';
 
 export const etc: TranslationEtc = {
   loading: 'しょりちゅう...',
+  loadingPokemon: 'ポケモンをよみこみちゅう...',
   reconnecting: 'さいせつぞくちゅう...',
   yes: 'はい',
   no: 'いいえ',

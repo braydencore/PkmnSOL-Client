@@ -4,6 +4,7 @@ export type TranslationEtc = {
 
 export const etc: TranslationEtc = {
   loading: '처리 중...',
+  loadingPokemon: '포켓몬 불러오는 중...',
   reconnecting: '재연결 중...',
   yes: '예',
   no: '아니오',

@@ -15,6 +15,7 @@ import { UserManager } from '@poposafari/core/user.manager';
 import {
   LoadingPhase,
   LoadingUi,
+  type LoadingProgressUi,
   LoginPhase,
   RegisterPhase,
   MessageUi,
@@ -526,17 +527,15 @@ export class GameScene extends BaseScene {
    * background right after Title, keeps peak memory down around the welcome
    * dialogue, where mobile Safari was previously crashing the tab. Safe to
    * call more than once; returns the same resolved promise after the first.
-   */
-  ensurePokemonAssets(): Promise<void> {
+   *
+   * Progress reports to `ui` (the caller's own on-screen UI, e.g.
+   * OverworldEntryUi's progress bar) rather than an internally-created
+   * LoadingUi -- this is the single largest asset load in the game and
+   * deserves its caller's full-screen loading UI, not an invisible one
+   * sitting underneath it. */
+  ensurePokemonAssets(ui: LoadingProgressUi): Promise<void> {
     if (!this.pokemonAssetsPromise) {
-      const ui = new LoadingUi(this);
-      ui.show();
-      this.pokemonAssetsPromise = new LoadingPhase(this)
-        .loadDeferredPokemonAssets(ui)
-        .finally(() => {
-          ui.hide();
-          ui.destroy();
-        });
+      this.pokemonAssetsPromise = new LoadingPhase(this).loadDeferredPokemonAssets(ui);
     }
     return this.pokemonAssetsPromise;
   }

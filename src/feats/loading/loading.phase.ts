@@ -7,7 +7,7 @@ import {
   createSpriteAnimation,
   getSpriteAnimationFrames,
 } from '@poposafari/utils';
-import { LoadingUi } from './loading.ui';
+import { LoadingUi, type LoadingProgressUi } from './loading.ui';
 import { WelcomePhase } from '../welcome/welcome.phase';
 import {
   p001Config,
@@ -177,15 +177,14 @@ export class LoadingPhase implements IGamePhase {
    * light enough to not repeat the OOM crash that hit right after the
    * welcome dialogue on memory-constrained mobile Safari.
    */
-  async loadDeferredPokemonAssets(ui: LoadingUi): Promise<void> {
-    this.ui = ui;
+  async loadDeferredPokemonAssets(ui: LoadingProgressUi): Promise<void> {
     await new Promise<void>((resolve) => {
       this.scene.load.on('progress', (value: number) => {
-        this.ui.setPercentText(value);
+        ui.setPercentText(value);
       });
 
       this.scene.load.on('fileprogress', (file: Phaser.Loader.File) => {
-        this.ui.setAssetText(file.key);
+        ui.setAssetText(file.key);
       });
 
       this.scene.load.once('complete', () => {

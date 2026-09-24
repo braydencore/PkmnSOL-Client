@@ -10,7 +10,17 @@ import {
   getBackgroundKey,
 } from '@poposafari/utils';
 
-export class LoadingUi extends BaseUi {
+/** What loadDeferredAssets()/loadDeferredPokemonAssets() (loading.phase.ts)
+ * need from whatever UI is showing progress — just LoadingUi itself, plus
+ * OverworldEntryUi, which drives its own progress bar off the exact same
+ * Pokemon-asset load rather than sitting in front of an invisible LoadingUi
+ * underneath it (DEPTH.MESSAGE+1 vs DEPTH.DEFAULT -- see overworld-entry.ui.ts). */
+export interface LoadingProgressUi {
+  setPercentText(value: number): void;
+  setAssetText(value: string): void;
+}
+
+export class LoadingUi extends BaseUi implements LoadingProgressUi {
   private bg!: GImage;
   private logo!: GImage;
   private percentText!: GText;

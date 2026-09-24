@@ -2,6 +2,7 @@ import type { TranslationEtc } from '../ko/etc';
 
 export const etc: TranslationEtc = {
   loading: 'Processing...',
+  loadingPokemon: 'Loading Pokémon...',
   reconnecting: 'Reconnecting...',
   yes: 'Yes',
   no: 'No',
