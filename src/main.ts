@@ -4,7 +4,7 @@ import BBCodeTextPlugin from 'phaser3-rex-plugins/plugins/bbcodetext-plugin.js';
 import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
 import { GameScene } from './scenes/game.scene';
 import { initI18n } from './i18n';
-import { initGbaShell, prepareGbaShell } from './gba-shell';
+import { initGbaShell, prepareGbaShell, computeTouchGameSize } from './gba-shell';
 import { renderInstallGate, shouldGateForInstall } from './install-gate';
 
 const start = async () => {
@@ -21,7 +21,29 @@ const start = async () => {
 
   await initI18n();
 
-  prepareGbaShell();
+  const touchPrimary = prepareGbaShell();
+
+  // Desktop keeps a fixed 1920x1080 canvas letterboxed to fit (Scale.FIT):
+  // the game's UI is built with elements placed at literal absolute pixel
+  // offsets from center (e.g. login's OAuth row is `oauthContainer.setY(+500)`,
+  // the overworld party list is `setPosition(+905, 0)`) rather than computed
+  // from screen size, and a desktop browser window's aspect ratio is
+  // arbitrary -- ENVELOP (cover/crop) was tried here once and cropped the
+  // login screen's Google/Discord buttons off the bottom on a perfectly
+  // ordinary window size.
+  //
+  // Touch mode doesn't have that problem in practice: it's landscape-only,
+  // and every real phone in landscape is *wider* than 16:9, never narrower
+  // -- so instead of letterboxing that extra width away, computeTouchGameSize()
+  // (gba-shell.ts) sizes the canvas to the device's actual aspect ratio with
+  // height still pinned at 1080, so nothing about existing screens' offsets
+  // or font sizes needs to change; the world camera just shows more
+  // environment on the sides instead of black bars. Scale.NONE because
+  // Scale Manager doesn't need to do any fitting of its own here -- the
+  // logical canvas already matches the device aspect by construction, and
+  // gba-shell.ts's setupFit() recomputes it (+ forces the canvas to fill
+  // #app via CSS) on every resize/orientation change.
+  const initialSize = touchPrimary ? computeTouchGameSize() : { width: 1920, height: 1080 };
 
   const config: Phaser.Types.Core.GameConfig = {
     // WebGL(GPU 가속)을 우선 시도하고, 사용 불가 환경(드라이버 블랙리스트,
@@ -30,20 +52,9 @@ const start = async () => {
     type: Phaser.AUTO,
     parent: 'app',
     scale: {
-      width: 1920,
-      height: 1080,
-      // FIT (letterbox) everywhere, not ENVELOP (cover/crop): the game's UI
-      // is built for a fixed 1920x1080 canvas with elements placed at
-      // literal absolute pixel offsets from center (e.g. login's OAuth row
-      // is `oauthContainer.setY(+500)`, the overworld party list is
-      // `setPosition(+905, 0)`) rather than computed from screen size — so
-      // cropping the canvas to cover a non-16:9 screen doesn't just show a
-      // bit more/less world, it pushes edge-anchored UI off-screen
-      // entirely. Confirmed by testing: ENVELOP cropped the login screen's
-      // Google/Discord buttons off the bottom on a perfectly ordinary
-      // iPhone. Fixing this for real means auditing and reworking those
-      // fixed offsets across every screen, not a Scale Manager setting.
-      mode: Phaser.Scale.FIT,
+      width: initialSize.width,
+      height: initialSize.height,
+      mode: touchPrimary ? Phaser.Scale.NONE : Phaser.Scale.FIT,
     },
     input: {
       keyboard: true,
