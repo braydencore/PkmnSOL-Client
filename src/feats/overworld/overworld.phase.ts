@@ -22,6 +22,7 @@ import { MusicianListUi } from '@poposafari/feats/menu/musician-list.ui';
 import DayNightFilter from '@poposafari/utils/day-night-filter';
 import i18next from '@poposafari/i18n';
 import { screenFadeIn } from '@poposafari/utils/screen-fade';
+import { lazyImport } from '@poposafari/utils/lazy-import';
 import { resolveCryKey } from '@poposafari/core/master.data.ts';
 import {
   ANIMATION,
@@ -263,11 +264,11 @@ export class OverworldPhase implements IGamePhase {
       this.scene.pushPhase(new RegisteredItemsPhase(this.scene, this.overworldUi));
     };
     this.overworldUi.onMapRequested = async () => {
-      const { SafariMapPhase } = await import('../safari-map/safari-map.phase');
+      const { SafariMapPhase } = await lazyImport(() => import('../safari-map/safari-map.phase'));
       this.scene.pushPhase(new SafariMapPhase(this.scene));
     };
     this.overworldUi.onHiddenMoveSurfRequested = async (caster) => {
-      const { HiddenMovePhase } = await import('../hidden-move/hidden-move.phase');
+      const { HiddenMovePhase } = await lazyImport(() => import('../hidden-move/hidden-move.phase'));
       this.scene.pushPhase(
         new HiddenMovePhase(this.scene, {
           hiddenMove: 'move_surf',
@@ -280,15 +281,15 @@ export class OverworldPhase implements IGamePhase {
     };
     this.overworldUi.onInteractivePhaseRequested = async (_object, phaseKey) => {
       if (phaseKey === 'safari') {
-        const { SafariPhase } = await import('../safari/safari.phase');
+        const { SafariPhase } = await lazyImport(() => import('../safari/safari.phase'));
         this.scene.pushPhase(new SafariPhase(this.scene));
       } else if (phaseKey === 'mart' && _object instanceof MartNpcObject) {
-        const { MartPhase } = await import('../mart');
+        const { MartPhase } = await lazyImport(() => import('../mart'));
         this.scene.pushPhase(
           new MartPhase(this.scene, _object.getMartItems(), _object.getNpcKey()),
         );
       } else if (phaseKey === 'fossil') {
-        const { FossilPhase } = await import('../fossil');
+        const { FossilPhase } = await lazyImport(() => import('../fossil'));
         this.scene.pushPhase(new FossilPhase(this.scene));
       } else if (phaseKey === 'musician') {
         void this.handleMusicianTalk();

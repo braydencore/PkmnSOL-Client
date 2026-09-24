@@ -6,6 +6,7 @@ import type { BattleInfoUi } from '../ui/battle-info.ui';
 import { INTRO_SLIDE, PLAYER_HUD, WILD_HUD, WILD_SHADOW } from '../battle.constants';
 import { resolveCryKey } from '@poposafari/core/master.data.ts';
 import { refreshBattleSpeed, tweenAsync } from './timing';
+import { lazyImport } from '@poposafari/utils/lazy-import';
 
 export async function displayBattleIntro(
   scene: GameScene,
@@ -138,7 +139,7 @@ export async function displayBattleIntro(
 
   if (isShiny) {
     await cryDone;
-    const { playShinySparkle } = await import('./shiny');
+    const { playShinySparkle } = await lazyImport(() => import('./shiny'));
     scene.getAudio().playEffect(SFX.SHINY);
     await playShinySparkle(scene, wildSprite);
   }

@@ -9,6 +9,7 @@ import { InitPosConfig } from './maps/door';
 import { MAP } from '@poposafari/types';
 import i18next from '@poposafari/i18n';
 import { OverworldUi } from './overworld.ui';
+import { lazyImport } from '@poposafari/utils/lazy-import';
 
 const YES_NO_ITEMS = () => [
   { key: 'yes', label: i18next.t('etc:yes') },
@@ -57,25 +58,25 @@ export class OverworldMenuPhase implements IGamePhase {
     OverworldMenuPhase.savedCursorKey = result.cursorKey;
 
     if (result.key === 'pokedex') {
-      const { PokedexPhase } = await import('../pokedex/pokedex.phase');
+      const { PokedexPhase } = await lazyImport(() => import('../pokedex/pokedex.phase'));
       this.scene.pushPhase(new PokedexPhase(this.scene));
       return;
     }
 
     if (result.key === 'pc') {
-      const { PokemonPcPhase } = await import('../pc/pokemon-pc.phase');
+      const { PokemonPcPhase } = await lazyImport(() => import('../pc/pokemon-pc.phase'));
       this.scene.pushPhase(new PokemonPcPhase(this.scene));
       return;
     }
 
     if (result.key === 'bag') {
-      const { BagPhase } = await import('../bag/bag.phase');
+      const { BagPhase } = await lazyImport(() => import('../bag/bag.phase'));
       this.scene.pushPhase(new BagPhase(this.scene, this.overworldUi));
       return;
     }
 
     if (result.key === 'pokeRader') {
-      const { PokeRaderPhase } = await import('../safari/poke-rader.phase');
+      const { PokeRaderPhase } = await lazyImport(() => import('../safari/poke-rader.phase'));
       this.scene.pushPhase(new PokeRaderPhase(this.scene));
       return;
     }
