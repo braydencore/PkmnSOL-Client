@@ -341,7 +341,7 @@ export class GameScene extends BaseScene {
   preload() {
     this.loadImage(TEXTURE.BG_0, 'ui/bgs', 'bg_0');
     this.loadImage(TEXTURE.BG_BLACK, 'ui/bgs', 'bg_black');
-    this.loadImage(TEXTURE.LOGO_0, 'ui', 'logo_0');
+    this.loadImage(TEXTURE.LOGO_0, 'ui', 'logo_solara_wordmark');
     this.loadImage(TEXTURE.WINDOW_0, 'ui/windows', 'window_0');
     this.loadImage(TEXTURE.CURSOR_WHITE, 'ui', 'cursor_w');
     this.loadImage('poke-ball', 'ui/items', 'poke-ball');

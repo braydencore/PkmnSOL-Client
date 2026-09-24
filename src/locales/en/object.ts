@@ -15,7 +15,7 @@ export const object: TranslationObject = {
   professor: 'Professor Ho',
   fossil_restorer: 'Fossil Restorer',
   musician: 'Musician',
-  musician_question: "La-la-la~\nWant to change PopoTown's background music?",
+  musician_question: "La-la-la~\nWant to change Solara's background music?",
   musician_confirm: 'Set it to "{{name}}"?',
   musician_done: 'Great choice! La-la-la~',
   musician_track_0: 'Safari Zone Gate',

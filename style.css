@@ -317,14 +317,13 @@ body.install-gate #install-gate {
   width: 64px;
   height: 64px;
   border-radius: 14px;
-  image-rendering: pixelated;
 }
 #install-gate h1 {
   font-size: 14px;
   line-height: 1.6;
   margin: 0 0 6px;
   max-width: 480px;
-  color: #8fdc7a;
+  color: #b39dff;
 }
 #install-gate-steps {
   display: flex;
@@ -352,14 +351,14 @@ body.install-gate #install-gate {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: rgba(234, 181, 74, 0.14);
-  border: 1px solid rgba(234, 181, 74, 0.55);
-  color: #eab54a;
+  background: rgba(20, 241, 149, 0.14);
+  border: 1px solid rgba(20, 241, 149, 0.55);
+  color: #14f195;
   font-size: 10px;
 }
 #install-gate-steps .step-text {
   flex: 1;
 }
 #install-gate-steps strong {
-  color: #eab54a;
+  color: #14f195;
 }

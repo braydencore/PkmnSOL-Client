@@ -17,7 +17,7 @@ export const object: TranslationObject = {
   professor: '호박사',
   fossil_restorer: '화석 복원사',
   musician: '음악가',
-  musician_question: '랄랄라~\n포포타운 배경음악을 바꾸고 싶니?',
+  musician_question: '랄랄라~\n솔라라 배경음악을 바꾸고 싶니?',
   musician_confirm: '「{{name}}」(으)로 할까?',
   musician_done: '좋은 선택이야! 랄랄라~',
   musician_track_0: '사파리존 게이트',

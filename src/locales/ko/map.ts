@@ -3,7 +3,7 @@ export type TranslationMap = {
 };
 
 export const map: TranslationMap = {
-  p001: '포포타운',
+  p001: '솔라라',
   p002: '옷가게',
   p003: '프렌들리숍',
   p004: '자전거숍',

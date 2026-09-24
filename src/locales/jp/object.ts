@@ -15,7 +15,7 @@ export const object: TranslationObject = {
   professor: 'ホはかせ',
   fossil_restorer: 'カセキふっかつし',
   musician: 'おんがくか',
-  musician_question: 'ランララ～\nポポタウンの BGMを かえたい?',
+  musician_question: 'ランララ～\nソララの BGMを かえたい?',
   musician_confirm: '「{{name}}」に する?',
   musician_done: 'いい せんたくだ! ランララ～',
   musician_track_0: 'サファリゾーンゲート',

@@ -1,6 +1,6 @@
 import { GameScene } from '@poposafari/scenes';
 import { BGM, IMenuItem } from '@poposafari/types';
-import { isPopotownOstTrack } from '@poposafari/core/popotown-ost';
+import { isSolaraOstTrack } from '@poposafari/core/solara-ost';
 import { MenuListUi } from './menu-list.ui';
 
 export class MusicianListUi extends MenuListUi {
@@ -23,7 +23,7 @@ export class MusicianListUi extends MenuListUi {
   }
 
   private previewTrack(item: IMenuItem): void {
-    if (!isPopotownOstTrack(item.key)) return;
+    if (!isSolaraOstTrack(item.key)) return;
     this.scene.getAudio().playBackground(item.key as BGM, 200);
   }
 }

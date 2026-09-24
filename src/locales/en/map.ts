@@ -1,7 +1,7 @@
 import type { TranslationMap } from '../ko/map';
 
 export const map: TranslationMap = {
-  p001: 'Popo Town',
+  p001: 'Solara',
   p002: 'Boutique',
   p003: 'Friendly Shop',
   p004: 'Bike Shop',

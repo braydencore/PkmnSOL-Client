@@ -151,7 +151,7 @@ export class TitleUi extends BaseUi implements IInputHandler, IRefreshableLangua
 
   createTopLayout() {
     this.topContainer = addContainer(this.scene, DEPTH.DEFAULT);
-    this.title = addImage(this.scene, TEXTURE.LOGO_0, undefined, 0, 0).setScale(1.85);
+    this.title = addImage(this.scene, TEXTURE.LOGO_0, undefined, 0, 0).setScale(0.4625);
 
     this.versionText = addText(
       this.scene,

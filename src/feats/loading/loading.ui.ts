@@ -75,7 +75,7 @@ export class LoadingUi extends BaseUi {
 
   createLayout(): void {
     this.bg = addBackground(this.scene, TEXTURE.BG_0);
-    this.logo = addImage(this.scene, TEXTURE.LOGO_0, undefined, 0, -100).setScale(1.7);
+    this.logo = addImage(this.scene, TEXTURE.LOGO_0, undefined, 0, -100).setScale(0.425);
     this.percentText = addText(
       this.scene,
       0,

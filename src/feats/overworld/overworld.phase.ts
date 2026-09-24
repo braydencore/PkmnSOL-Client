@@ -38,7 +38,7 @@ import {
   TEXTURE,
 } from '@poposafari/types';
 import { addImage, addSprite, addText, addWindow } from '@poposafari/utils';
-import { POPOTOWN_OST_TRACKS, resolveMapBgm, setPopotownOst } from '@poposafari/core/popotown-ost';
+import { SOLARA_OST_TRACKS, resolveMapBgm, setSolaraOst } from '@poposafari/core/solara-ost';
 
 export class OverworldPhase implements IGamePhase {
   private overworldUi: OverworldUi | null = null;
@@ -78,7 +78,7 @@ export class OverworldPhase implements IGamePhase {
       question.hide();
       if (choice?.key !== 'yes') return;
 
-      const items = POPOTOWN_OST_TRACKS.map((bgm, i) => ({
+      const items = SOLARA_OST_TRACKS.map((bgm, i) => ({
         key: bgm as string,
         label: i18next.t(`object:musician_track_${i}`),
       }));
@@ -101,7 +101,7 @@ export class OverworldPhase implements IGamePhase {
         question.hide();
 
         if (confirm?.key === 'yes') {
-          setPopotownOst(selected.key as BGM);
+          setSolaraOst(selected.key as BGM);
           this.scene.getAudio().playBackground(selected.key as BGM);
           await talk.showMessage(i18next.t('object:musician_done'), {
             name: i18next.t('object:musician'),
