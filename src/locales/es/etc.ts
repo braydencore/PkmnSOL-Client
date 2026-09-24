@@ -160,4 +160,9 @@ export const etc: TranslationEtc = {
   menuCancel: 'SALIR',
   githubNotice: 'El código abierto está en preparación.',
   chatTitle: 'Di algo...',
+  profileTrainerSince: 'Entrenador desde {{date}}',
+  profilePokedexCount: '{{count}} Pokémon registrados',
+  profileMale: 'Masculino',
+  profileFemale: 'Femenino',
+  profileClose: 'Cerrar',
 };

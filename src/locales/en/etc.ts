@@ -158,4 +158,9 @@ export const etc: TranslationEtc = {
   menuCancel: 'EXIT',
   githubNotice: 'Open source is on the way.',
   chatTitle: 'Say something...',
+  profileTrainerSince: 'Trainer since {{date}}',
+  profilePokedexCount: '{{count}} Pokémon registered',
+  profileMale: 'Male',
+  profileFemale: 'Female',
+  profileClose: 'Close',
 };

@@ -15,6 +15,7 @@ import {
   PcSlotState,
   PokedexEntry,
   PokemonBoxItem,
+  PublicProfileRes,
   RegisterLocalReq,
   RestoreFossilRes,
   SafariTicketStatusRes,
@@ -143,6 +144,13 @@ export class ApiManager {
     }
 
     return null;
+  }
+
+  async getPublicProfile(accountId: string): Promise<PublicProfileRes | null> {
+    const res = await this.client.get<ApiResponse<PublicProfileRes>>(
+      `/users/${accountId}/profile`,
+    );
+    return res.data.success ? res.data.data : null;
   }
 
   async getPokemonBox(): Promise<PokemonBoxItem[] | null> {

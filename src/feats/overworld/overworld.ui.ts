@@ -53,6 +53,7 @@ import {
 } from './objects';
 import { OverworldHudUI } from './overworld-hud.ui';
 import { ChatUi } from './chat.ui';
+import { ProfileUi } from './profile.ui';
 import i18next from '@poposafari/i18n';
 import DayNightFilter from '@poposafari/utils/day-night-filter';
 import CaveFilter from '@poposafari/utils/cave-filter';
@@ -149,6 +150,7 @@ export class OverworldUi extends BaseUi {
   private hud: OverworldHudUI | null = null;
   private chatUi: ChatUi | null = null;
   private chatActionPending = false;
+  private profileUi: ProfileUi | null = null;
   private newbieRestricted: boolean = false;
   private mapView: MapView | null = null;
   private mapConfig: MapConfig | null = null;
@@ -421,6 +423,11 @@ export class OverworldUi extends BaseUi {
     try {
       const obj = this.getFacingInteractiveObject();
       if (!obj) {
+        const facingPlayer = this.getFacingOtherPlayer();
+        if (facingPlayer) {
+          await this.handleOtherPlayerTalk(facingPlayer.userId);
+          return;
+        }
         if (this.isFacingPet()) {
           await this.handlePetTalk();
           return;
@@ -475,6 +482,32 @@ export class OverworldUi extends BaseUi {
       };
       check();
     });
+  }
+
+  private getFacingOtherPlayer(): { userId: string; other: OtherPlayerObject } | null {
+    if (!this.player) return null;
+    const dir = this.player.getLastDirection();
+    if (dir === DIRECTION.NONE) return null;
+    const { x: px, y: py } = this.player.getTilePos();
+    const { dx, dy } = directionToDelta(dir);
+    const fx = px + dx;
+    const fy = py + dy;
+    for (const [userId, other] of this.otherPlayers) {
+      const { x: ox, y: oy } = other.getTilePos();
+      if (ox === fx && oy === fy) return { userId, other };
+    }
+    return null;
+  }
+
+  private async handleOtherPlayerTalk(userId: string): Promise<void> {
+    if (!this.profileUi) return;
+    try {
+      const data = await this.scene.getApi().getPublicProfile(userId);
+      if (!data) return;
+      await this.profileUi.open(data);
+    } catch {
+      // fail-silent: a profile lookup failing shouldn't interrupt movement
+    }
   }
 
   private isFacingPet(): boolean {
@@ -1764,6 +1797,7 @@ export class OverworldUi extends BaseUi {
     this.syncRunningToggleIcon();
 
     this.chatUi = new ChatUi(this.scene);
+    this.profileUi = new ProfileUi(this.scene);
 
     if (this.mapConfig && this.mapConfig.showLocationBanner !== false) {
       const area = this.scene.getMasterData().getMapArea(this.mapConfig.key);
@@ -1855,6 +1889,10 @@ export class OverworldUi extends BaseUi {
       this.chatUi = null;
     }
     this.chatActionPending = false;
+    if (this.profileUi) {
+      this.profileUi.destroy();
+      this.profileUi = null;
+    }
 
     for (const obj of this.safariObjects) {
       obj.destroy();

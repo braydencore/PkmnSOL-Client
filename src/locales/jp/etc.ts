@@ -162,4 +162,9 @@ export const etc: TranslationEtc = {
   menuCancel: 'とじる',
   githubNotice: 'オープンソースを じゅんびちゅう です。',
   chatTitle: 'なにか はなそう...',
+  profileTrainerSince: '{{date}} から トレーナー',
+  profilePokedexCount: '{{count}}ひき とうろく',
+  profileMale: 'おとこのこ',
+  profileFemale: 'おんなのこ',
+  profileClose: 'とじる',
 };

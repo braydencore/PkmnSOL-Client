@@ -74,6 +74,18 @@ export interface GetMeRes {
   safariTicket: SafariTicketStatusRes;
 }
 
+// ── 다른 플레이어의 공개 프로필 (GET /api/users/:accountId/profile) ──
+export interface PublicProfileRes {
+  profile: {
+    nickname: string;
+    gender: number;
+    playtime: number;
+    createdAt: string;
+  };
+  equippedCostumes: { costumeId: string }[];
+  pokedexCount: number;
+}
+
 export interface SafariTicketStatusRes {
   available: number;
   cap: number;
