@@ -143,9 +143,9 @@ export class LoadingPhase implements IGamePhase {
       // this.scene.loadImage(TEXTURE.BG_10, 'ui/bgs', 'bg_solara_10');
       // this.scene.loadImage(TEXTURE.BG_11, 'ui/bgs', 'bg_solara_11');
       // this.scene.loadImage(TEXTURE.BG_12, 'ui/bgs', 'bg_solara_12');
-      this.scene.loadImage(TEXTURE.WINDOW_1, 'ui/windows', 'window_1');
-      this.scene.loadImage(TEXTURE.WINDOW_2, 'ui/windows', 'window_2');
-      this.scene.loadImage(TEXTURE.WINDOW_3, 'ui/windows', 'window_3');
+      this.scene.loadImage(TEXTURE.WINDOW_1, 'ui/windows', 'window_1_solara');
+      this.scene.loadImage(TEXTURE.WINDOW_2, 'ui/windows', 'window_2_solara');
+      this.scene.loadImage(TEXTURE.WINDOW_3, 'ui/windows', 'window_3_solara');
       this.scene.loadImage(TEXTURE.ICON_GOOGLE, 'ui/icons', 'icon_google');
       this.scene.loadImage(TEXTURE.ICON_DISCORD, 'ui/icons', 'icon_discord');
       this.scene.loadImage(TEXTURE.LOGO_GITHUB, 'ui', 'logo_github');
