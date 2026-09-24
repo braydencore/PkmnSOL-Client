@@ -8,6 +8,7 @@ export enum DOOR {
   P001_NPC2 = 'p001_npc2',
   P001_LAB = 'p001_lab',
   P001_NPC3 = 'p001_npc3',
+  P001_TO_S001 = 'p001_to_s001',
 
   P002_DOWN_0 = 'p002_down_0',
   P002_DOWN_1 = 'p002_down_1',
@@ -218,6 +219,8 @@ export enum DOOR {
 
   S046_UP_0 = 's046_up_0',
   S046_UP_1 = 's046_up_1',
+
+  S001_TO_P001 = 's001_to_p001',
 }
 
 export enum INIT_POS {
@@ -228,6 +231,7 @@ export enum INIT_POS {
   P001_NPC2 = 'p001_npc2',
   P001_LAB = 'p001_lab',
   P001_NPC3 = 'p001_npc3',
+  P001_FROM_S001 = 'p001_from_s001',
 
   P002_DOWN_0 = 'p002_down_0',
   P002_DOWN_1 = 'p002_down_1',
@@ -259,6 +263,7 @@ export enum INIT_POS {
   S001_RIGHT_0 = 's001_right_0',
   S001_RIGHT_1 = 's001_right_1',
   S001_RIGHT_2 = 's001_right_2',
+  S001_FROM_P001 = 's001_from_p001',
 
   S002_UP_0 = 's002_up_0',
   S002_UP_1 = 's002_up_1',
@@ -498,6 +503,20 @@ export const OVERWORLD_DOOR: Record<DOOR, DoorConfig> = {
     name: '',
     x: 29,
     y: 50,
+    offsetY: 0,
+  },
+  [DOOR.P001_TO_S001]: {
+    door: TEXTURE.BLANK,
+    name: '',
+    x: 65,
+    y: 40,
+    offsetY: 0,
+  },
+  [DOOR.S001_TO_P001]: {
+    door: TEXTURE.BLANK,
+    name: '',
+    x: 9,
+    y: 10,
     offsetY: 0,
   },
   [DOOR.P002_DOWN_0]: {
@@ -1661,6 +1680,11 @@ export const OVERWORLD_INIT_POS: Record<INIT_POS, InitPosConfig> = {
     x: 29,
     y: 51,
   },
+  [INIT_POS.P001_FROM_S001]: {
+    location: MAP.PLAZA_001,
+    x: 64,
+    y: 40,
+  },
   [INIT_POS.P002_DOWN_0]: {
     location: MAP.PLAZA_002,
     x: 6,
@@ -1771,6 +1795,11 @@ export const OVERWORLD_INIT_POS: Record<INIT_POS, InitPosConfig> = {
     location: MAP.SAFARI_001,
     x: 47,
     y: 21,
+  },
+  [INIT_POS.S001_FROM_P001]: {
+    location: MAP.SAFARI_001,
+    x: 10,
+    y: 10,
   },
 
   [INIT_POS.S002_UP_0]: {

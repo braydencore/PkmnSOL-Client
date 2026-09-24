@@ -63,6 +63,7 @@ export const p001Config: MapConfig = {
     { startId: DOOR.P001_NPC2, destId: INIT_POS.P006_DOWN_0 },
     { startId: DOOR.P001_LAB, destId: INIT_POS.P008_DOWN_0 },
     { startId: DOOR.P001_NPC3, destId: INIT_POS.P009_DOWN_0 },
+    { startId: DOOR.P001_TO_S001, destId: INIT_POS.S001_FROM_P001 },
   ],
 
   npcs: [

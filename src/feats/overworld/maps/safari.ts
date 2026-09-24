@@ -98,6 +98,7 @@ export const s001Config: MapConfig = {
     { startId: DOOR.S001_RIGHT_2, destId: INIT_POS.S002_DOWN_2 },
     { startId: DOOR.S001_DOWN_0, destId: INIT_POS.S046_UP_0 },
     { startId: DOOR.S001_DOWN_1, destId: INIT_POS.S046_UP_1 },
+    { startId: DOOR.S001_TO_P001, destId: INIT_POS.P001_FROM_S001 },
   ],
 
   npcs: [
