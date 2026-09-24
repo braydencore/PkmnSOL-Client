@@ -27,34 +27,6 @@ export function isTouchPrimary(): boolean {
   );
 }
 
-const DESIGN_HEIGHT = 1080;
-const MIN_DESIGN_WIDTH = 1920; // never render narrower than the original 16:9 design
-
-/**
- * Touch mode is landscape-only (see the rotate-prompt handling elsewhere),
- * so #app's aspect ratio here is always the device's actual screen aspect.
- * Phaser.Scale.FIT holds a fixed 1920x1080 logical canvas and letterboxes
- * anything wider in CSS, *outside* the canvas element entirely — that's
- * genuinely dead space Phaser has no way to draw into, and nearly every
- * modern phone in landscape is wider than 16:9 (19.5:9-21:9 is typical).
- *
- * Instead of a fixed canvas, touch mode sizes the logical canvas to the
- * device's real aspect ratio with height pinned at 1080 — every existing
- * screen's pixel-tuned offsets and font sizes keep the exact same visual
- * scale they've always had (nothing here changes the *height*), only the
- * width grows. The overworld camera just ends up showing more environment
- * on the sides instead of black bars; center-anchored UI (which is how
- * every screen already positions things — see base.ui.ts) doesn't need to
- * move at all, it just gets more breathing room at the edges.
- */
-export function computeTouchGameSize(): { width: number; height: number } {
-  const w = window.visualViewport?.width ?? window.innerWidth;
-  const h = window.visualViewport?.height ?? window.innerHeight;
-  const aspect = h > 0 ? w / h : 16 / 9;
-  const width = Math.round(Math.max(MIN_DESIGN_WIDTH, DESIGN_HEIGHT * aspect));
-  return { width, height: DESIGN_HEIGHT };
-}
-
 /** Reads the player's current keybind for an action (respecting any rebind
  * made in the Options screen), falling back to the default if unset. */
 function getBoundCode(action: GameAction): string {
@@ -201,20 +173,15 @@ function wireActionButtons(scene: Phaser.Scene): void {
 }
 
 /**
- * #app fills the viewport directly via CSS (dvw/dvh, see style.css). Touch
- * mode runs Phaser.Scale.NONE with a logical canvas sized by
- * computeTouchGameSize() (see its comment for why) instead of Scale.FIT, so
- * unlike FIT's own automatic ResizeObserver-driven fit, nothing resizes the
- * logical canvas on its own here -- every orientation change or on-screen-
- * keyboard/URL-bar resize needs setGameSize() recomputed by hand before the
- * refresh() that re-reads the new layout for input-coordinate mapping.
+ * #app fills the viewport directly via CSS (dvw/dvh, see style.css) — no
+ * pixel math needed here at all, so Phaser's own Scale.FIT (which watches
+ * its parent via a ResizeObserver) just works. This is only a defensive
+ * nudge on top of that: iOS Safari's orientation-change/chrome-resize
+ * timing is occasionally flaky enough that an explicit refresh (after
+ * layout has actually settled) is cheap, safe insurance.
  */
 function setupFit(game: Phaser.Game): void {
   const refresh = (): void => {
-    const { width, height } = computeTouchGameSize();
-    if (width !== game.scale.width || height !== game.scale.height) {
-      game.scale.setGameSize(width, height);
-    }
     game.scale.refresh();
   };
 
