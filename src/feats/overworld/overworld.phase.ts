@@ -11,14 +11,12 @@ import type {
 import { OverworldMenuPhase } from './overworld-menu.phase';
 import { RegisteredItemsPhase } from './registered-items.phase';
 import { OverworldUi } from './overworld.ui';
-import { SafariPhase } from '../safari/safari.phase';
-import { SafariMapPhase } from '../safari-map/safari-map.phase';
-import { MartPhase } from '../mart';
-import { FossilPhase } from '../fossil';
 import { MartNpcObject } from './objects/special-npc.object';
+// BattlePhase stays a static import: overworld.ui.ts already imports the
+// whole battle/ module eagerly (it needs the class reference synchronously
+// for hasPhaseOfType(BattlePhase) checks), so dynamic-importing it here too
+// would add async overhead for zero actual bundle-size benefit.
 import { BattlePhase } from '../battle';
-import { RewardPhase } from '../battle/reward/reward.phase';
-import { HiddenMovePhase } from '../hidden-move/hidden-move.phase';
 import { MenuUi } from '@poposafari/feats/menu/menu-ui';
 import { MusicianListUi } from '@poposafari/feats/menu/musician-list.ui';
 import DayNightFilter from '@poposafari/utils/day-night-filter';
@@ -264,10 +262,12 @@ export class OverworldPhase implements IGamePhase {
       if (!this.overworldUi) return;
       this.scene.pushPhase(new RegisteredItemsPhase(this.scene, this.overworldUi));
     };
-    this.overworldUi.onMapRequested = () => {
+    this.overworldUi.onMapRequested = async () => {
+      const { SafariMapPhase } = await import('../safari-map/safari-map.phase');
       this.scene.pushPhase(new SafariMapPhase(this.scene));
     };
-    this.overworldUi.onHiddenMoveSurfRequested = (caster) => {
+    this.overworldUi.onHiddenMoveSurfRequested = async (caster) => {
+      const { HiddenMovePhase } = await import('../hidden-move/hidden-move.phase');
       this.scene.pushPhase(
         new HiddenMovePhase(this.scene, {
           hiddenMove: 'move_surf',
@@ -278,14 +278,17 @@ export class OverworldPhase implements IGamePhase {
         }),
       );
     };
-    this.overworldUi.onInteractivePhaseRequested = (_object, phaseKey) => {
+    this.overworldUi.onInteractivePhaseRequested = async (_object, phaseKey) => {
       if (phaseKey === 'safari') {
+        const { SafariPhase } = await import('../safari/safari.phase');
         this.scene.pushPhase(new SafariPhase(this.scene));
       } else if (phaseKey === 'mart' && _object instanceof MartNpcObject) {
+        const { MartPhase } = await import('../mart');
         this.scene.pushPhase(
           new MartPhase(this.scene, _object.getMartItems(), _object.getNpcKey()),
         );
       } else if (phaseKey === 'fossil') {
+        const { FossilPhase } = await import('../fossil');
         this.scene.pushPhase(new FossilPhase(this.scene));
       } else if (phaseKey === 'musician') {
         void this.handleMusicianTalk();

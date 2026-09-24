@@ -4,10 +4,6 @@ import { OverworldMenuUi } from './overworld-menu.ui';
 import { OptionPhase } from '../option';
 import { BackTitleMenuUi } from './back-title-menu.ui';
 import { TitlePhase } from '../title';
-import { PokemonPcPhase } from '../pc/pokemon-pc.phase';
-import { BagPhase } from '../bag/bag.phase';
-import { PokeRaderPhase } from '../safari/poke-rader.phase';
-import { PokedexPhase } from '../pokedex/pokedex.phase';
 import { MenuUi } from '../menu/menu-ui';
 import { InitPosConfig } from './maps/door';
 import { MAP } from '@poposafari/types';
@@ -61,21 +57,25 @@ export class OverworldMenuPhase implements IGamePhase {
     OverworldMenuPhase.savedCursorKey = result.cursorKey;
 
     if (result.key === 'pokedex') {
+      const { PokedexPhase } = await import('../pokedex/pokedex.phase');
       this.scene.pushPhase(new PokedexPhase(this.scene));
       return;
     }
 
     if (result.key === 'pc') {
+      const { PokemonPcPhase } = await import('../pc/pokemon-pc.phase');
       this.scene.pushPhase(new PokemonPcPhase(this.scene));
       return;
     }
 
     if (result.key === 'bag') {
+      const { BagPhase } = await import('../bag/bag.phase');
       this.scene.pushPhase(new BagPhase(this.scene, this.overworldUi));
       return;
     }
 
     if (result.key === 'pokeRader') {
+      const { PokeRaderPhase } = await import('../safari/poke-rader.phase');
       this.scene.pushPhase(new PokeRaderPhase(this.scene));
       return;
     }
