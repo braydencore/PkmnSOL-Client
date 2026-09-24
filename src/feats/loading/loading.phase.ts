@@ -127,18 +127,22 @@ export class LoadingPhase implements IGamePhase {
     return new Promise((resolve) => {
       this.scene.load.once('complete', () => resolve());
 
-      this.scene.loadImage(TEXTURE.BG_1, 'ui/bgs', 'bg_solara_1');
-      this.scene.loadImage(TEXTURE.BG_2, 'ui/bgs', 'bg_solara_2');
-      this.scene.loadImage(TEXTURE.BG_3, 'ui/bgs', 'bg_solara_3');
-      this.scene.loadImage(TEXTURE.BG_4, 'ui/bgs', 'bg_solara_4');
-      this.scene.loadImage(TEXTURE.BG_5, 'ui/bgs', 'bg_solara_5');
-      this.scene.loadImage(TEXTURE.BG_6, 'ui/bgs', 'bg_solara_6');
-      this.scene.loadImage(TEXTURE.BG_7, 'ui/bgs', 'bg_solara_7');
-      this.scene.loadImage(TEXTURE.BG_8, 'ui/bgs', 'bg_solara_8');
-      this.scene.loadImage(TEXTURE.BG_9, 'ui/bgs', 'bg_solara_9');
-      this.scene.loadImage(TEXTURE.BG_10, 'ui/bgs', 'bg_solara_10');
-      this.scene.loadImage(TEXTURE.BG_11, 'ui/bgs', 'bg_solara_11');
-      this.scene.loadImage(TEXTURE.BG_12, 'ui/bgs', 'bg_solara_12');
+      this.scene.loadImage(TEXTURE.BG_1, 'ui/bgs', 'bg_solara_grok');
+      // BG_2..BG_12 are on hold -- RANDOM_BACKGROUND_KEYS (utils/ui.ts) only
+      // picks from BG_1 for now, so loading the rest here would just be
+      // wasted Stage 1 bandwidth. Restore both the moment there's real art
+      // for them again.
+      // this.scene.loadImage(TEXTURE.BG_2, 'ui/bgs', 'bg_solara_2');
+      // this.scene.loadImage(TEXTURE.BG_3, 'ui/bgs', 'bg_solara_3');
+      // this.scene.loadImage(TEXTURE.BG_4, 'ui/bgs', 'bg_solara_4');
+      // this.scene.loadImage(TEXTURE.BG_5, 'ui/bgs', 'bg_solara_5');
+      // this.scene.loadImage(TEXTURE.BG_6, 'ui/bgs', 'bg_solara_6');
+      // this.scene.loadImage(TEXTURE.BG_7, 'ui/bgs', 'bg_solara_7');
+      // this.scene.loadImage(TEXTURE.BG_8, 'ui/bgs', 'bg_solara_8');
+      // this.scene.loadImage(TEXTURE.BG_9, 'ui/bgs', 'bg_solara_9');
+      // this.scene.loadImage(TEXTURE.BG_10, 'ui/bgs', 'bg_solara_10');
+      // this.scene.loadImage(TEXTURE.BG_11, 'ui/bgs', 'bg_solara_11');
+      // this.scene.loadImage(TEXTURE.BG_12, 'ui/bgs', 'bg_solara_12');
       this.scene.loadImage(TEXTURE.WINDOW_1, 'ui/windows', 'window_1');
       this.scene.loadImage(TEXTURE.WINDOW_2, 'ui/windows', 'window_2');
       this.scene.loadImage(TEXTURE.WINDOW_3, 'ui/windows', 'window_3');

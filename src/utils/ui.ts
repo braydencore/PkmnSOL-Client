@@ -545,19 +545,22 @@ function getSpriteAnimationFrameYoyo(animation: ANIMATION | string) {
 
 const BACKGROUND_KEY = [TEXTURE.BG_1, TEXTURE.BG_1, TEXTURE.BG_1] as const;
 
+// BG_2..BG_12 are commented out (not just removed) until there's real art
+// for them again -- see the matching note in loading.phase.ts, which stopped
+// loading them for the same reason. Restore both together.
 const RANDOM_BACKGROUND_KEYS = [
   TEXTURE.BG_1,
-  TEXTURE.BG_2,
-  TEXTURE.BG_3,
-  TEXTURE.BG_4,
-  TEXTURE.BG_5,
-  TEXTURE.BG_6,
-  TEXTURE.BG_7,
-  TEXTURE.BG_8,
-  TEXTURE.BG_9,
-  TEXTURE.BG_10,
-  TEXTURE.BG_11,
-  TEXTURE.BG_12,
+  // TEXTURE.BG_2,
+  // TEXTURE.BG_3,
+  // TEXTURE.BG_4,
+  // TEXTURE.BG_5,
+  // TEXTURE.BG_6,
+  // TEXTURE.BG_7,
+  // TEXTURE.BG_8,
+  // TEXTURE.BG_9,
+  // TEXTURE.BG_10,
+  // TEXTURE.BG_11,
+  // TEXTURE.BG_12,
 ] as const;
 
 // dawn : 6:00 ~ 6:59
