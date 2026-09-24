@@ -2266,8 +2266,7 @@ export class OverworldUi extends BaseUi {
     if (this.hud && this.player) {
       const profile = this.scene.getUser()?.getProfile();
       const mapKey = this.mapConfig?.key ?? profile?.lastLocation?.map ?? '';
-      const pos = this.player.getTilePos();
-      this.hud.refreshInfo(mapKey, pos.x, pos.y, profile?.money ?? 0);
+      this.hud.refreshInfo(mapKey, profile?.money ?? 0);
       this.hud.updateTime();
     }
     if (this.mapView) {
@@ -2572,8 +2571,7 @@ export class OverworldUi extends BaseUi {
     if (this.hud) {
       const profile = user?.getProfile();
       const mapKey = this.mapConfig?.key ?? profile?.lastLocation?.map ?? '';
-      const pos = this.player.getTilePos();
-      this.hud.refreshInfo(mapKey, pos.x, pos.y, profile?.money ?? 0);
+      this.hud.refreshInfo(mapKey, profile?.money ?? 0);
       this.hud.updateTime();
     }
 

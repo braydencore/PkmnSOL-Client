@@ -133,8 +133,6 @@ export class OverworldHudUI extends Phaser.GameObjects.Container {
   private weatherIcon!: GImage;
   private weatherText!: GText;
 
-  private xyText!: GText;
-
   private profileContainer!: GContainer;
   private profileAvatarContainer!: GContainer;
   private profileAvatarBg!: Phaser.GameObjects.Graphics;
@@ -172,7 +170,6 @@ export class OverworldHudUI extends Phaser.GameObjects.Container {
     this.createQuickSlot();
     this.createTime();
     this.createWeather();
-    this.createXY();
     this.createInfo();
     this.createProfile();
 
@@ -181,7 +178,6 @@ export class OverworldHudUI extends Phaser.GameObjects.Container {
       this.partyList,
       this.timeContainer,
       this.weatherContainer,
-      this.xyText,
       this.infoList,
       this.profileContainer,
     ]);
@@ -486,35 +482,19 @@ export class OverworldHudUI extends Phaser.GameObjects.Container {
     this.weatherText = addText(
       this.scene,
       0,
-      0,
+      +75,
       '--:--',
       30,
       '100',
       'center',
       TEXTSTYLE.YELLOW,
       TEXTSHADOW.GRAY,
-    )
-      .setOrigin(0.5, 0.5)
-      .setVisible(false);
-    this.weatherContainer.add([this.weatherIcon, this.weatherText]);
-  }
-
-  private createXY() {
-    const user = this.scene.getUser()?.getProfile();
-    const x = user?.lastLocation.x ?? 0;
-    const y = user?.lastLocation.y ?? 0;
-
-    this.xyText = addText(
-      this.scene,
-      -810,
-      -230,
-      `x:${x}, y:${y}`,
-      40,
-      '100',
-      'center',
-      TEXTSTYLE.WHITE,
-      TEXTSHADOW.GRAY,
     ).setOrigin(0.5, 0.5);
+    this.weatherContainer.add([this.weatherIcon, this.weatherText]);
+    // Only meaningful during an active weather event (it's the countdown to
+    // that event ending) -- updateWeather() below toggles this on/off, so it
+    // doesn't sit on screen as an unlabeled icon the rest of the time.
+    this.weatherContainer.setVisible(false);
   }
 
   private createInfo() {
@@ -713,13 +693,11 @@ export class OverworldHudUI extends Phaser.GameObjects.Container {
     }
   }
 
-  refreshInfo(mapKey: string, tileX: number, tileY: number, money: number): void {
+  refreshInfo(mapKey: string, money: number): void {
     this.timeLabelText?.setText(i18next.t('etc:timeUntilNext'));
 
     const loc = this.infoList.getRow('location');
     if (loc) loc.text.setText(mapKey ? i18next.t(`map:${mapKey}`) : '');
-
-    if (this.xyText) this.xyText.setText(`x:${tileX}, y:${tileY}`);
 
     const moneyRow = this.infoList.getRow('money');
     if (moneyRow) moneyRow.text.setText(`${MONEY_SYMBOL} ${money}`);
@@ -764,5 +742,7 @@ export class OverworldHudUI extends Phaser.GameObjects.Container {
     } else {
       this.weatherIcon.clearTint();
     }
+
+    this.weatherContainer.setVisible(!!weather);
   }
 }
