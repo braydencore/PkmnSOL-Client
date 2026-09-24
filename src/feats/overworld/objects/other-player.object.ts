@@ -76,6 +76,7 @@ export class OtherPlayerObject extends BaseObject {
   private addToContainer: ((obj: Phaser.GameObjects.GameObject) => void) | null = null;
   private lastPetSpeed = 2;
   private baseSurfSprite: Phaser.GameObjects.Sprite | null = null;
+  private onTap: (() => void) | null = null;
 
   private static readonly DEFAULT_MOVE_DURATION_MS = 120;
   private static readonly JUMP_ARC_HEIGHT = 60;
@@ -132,6 +133,39 @@ export class OtherPlayerObject extends BaseObject {
     if (this.outfitSprite) this.avatarContainer.add(this.outfitSprite);
     if (this.hairSprite) this.avatarContainer.add(this.hairSprite);
     this.avatarContainer.setDepth(this.tileY);
+
+    // Tappable so another player's profile is one tap away, no need to walk
+    // up and face them. Interactive on the base sprite itself (NOT
+    // avatarContainer): the container sits fixed at (0,0) while its
+    // children move independently via tweens (see moveToTile), so a
+    // container-level hit area would stay pinned to spawn instead of
+    // following the avatar. A sprite's hit area is defined in its own local
+    // space and simply follows its transform every frame, no manual
+    // repositioning needed. Padded well past the frame bounds -- same
+    // "native sprite is tiny, pad the tap target" pattern used for the
+    // hit areas in box-select.container.ts / costume-preview.container.ts.
+    const sprite = this.getSprite();
+    const padX = 10;
+    const padY = 10;
+    sprite.setInteractive({
+      hitArea: new Phaser.Geom.Rectangle(
+        -sprite.width / 2 - padX,
+        -sprite.height - padY,
+        sprite.width + padX * 2,
+        sprite.height + padY * 2,
+      ),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      cursor: 'pointer',
+    });
+    sprite.on('pointerup', () => this.onTap?.());
+  }
+
+  /** Called when the player taps/clicks this avatar -- wired externally by
+   * OverworldUi to open the profile card, since this object doesn't itself
+   * know its own userId (OverworldUi's otherPlayers Map is the source of
+   * truth for that). */
+  setOnTap(cb: () => void): void {
+    this.onTap = cb;
   }
 
   getAvatarContainer(): Phaser.GameObjects.Container {

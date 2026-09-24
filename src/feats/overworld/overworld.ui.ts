@@ -510,6 +510,24 @@ export class OverworldUi extends BaseUi {
     }
   }
 
+  /** Tapping/clicking another player's avatar opens their profile directly
+   * -- bypasses the walk-up-and-face gesture entirely, since a raw pointer
+   * event on the sprite doesn't go through onInput()'s action routing.
+   * Skips while another transient interaction is already in flight, since
+   * this fires independently of that routing's own guards. */
+  private handlePlayerTap(userId: string): void {
+    if (
+      this.talkActionPending ||
+      this.doorTransitionPending ||
+      this.wildEncounterPending ||
+      this.petTalkPending ||
+      this.surfPromptPending
+    ) {
+      return;
+    }
+    void this.handleOtherPlayerTalk(userId);
+  }
+
   private isFacingPet(): boolean {
     if (!this.player || !this.pet) return false;
     const dir = this.player.getLastDirection();
@@ -1746,6 +1764,7 @@ export class OverworldUi extends BaseUi {
           this.worldContainer!.add(other.getAvatarContainer());
           this.nameContainer!.add(other.getName());
           other.setContainerAdd((obj) => this.worldContainer?.add(obj));
+          other.setOnTap(() => this.handlePlayerTap(u.userId));
           this.otherPlayers.set(u.userId, other);
 
           const initialPet = parsePetField(u.pet);
@@ -1941,6 +1960,7 @@ export class OverworldUi extends BaseUi {
     this.worldContainer.add(other.getAvatarContainer());
     this.nameContainer.add(other.getName());
     other.setContainerAdd((obj) => this.worldContainer?.add(obj));
+    other.setOnTap(() => this.handlePlayerTap(u.userId));
     this.otherPlayers.set(u.userId, other);
 
     const initialPet = parsePetField(u.pet);
