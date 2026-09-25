@@ -168,11 +168,6 @@ export class OverworldEntryPhase implements IGamePhase {
     const onChangeMapError = (payload: { message?: string }) => {
       this.removeListeners();
       console.error('[OverworldEntry] change_map_error:', payload?.message);
-      // The server rejected this transition (e.g. an unrecognized destination) --
-      // don't strand the player on the loading screen. Fall back to a fresh
-      // 'init', which resyncs to wherever the server actually has them and
-      // takes them back into the overworld from there.
-      this.enterInit(socket);
     };
 
     socket.on('init_room_state', onInitRoomState);
